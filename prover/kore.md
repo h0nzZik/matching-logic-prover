@@ -1,6 +1,10 @@
 Kore Sugar
 ==========
 
+The `KORE` module should only contain definitions of
+the general matching logic constructs. All definitions
+for specific theories should be moved out of this file.
+
 ```k
 module TOKENS
   // Lexical
@@ -18,16 +22,22 @@ module TOKENS-SYNTAX
   syntax LowerName ::= r"[a-z][A-Za-z\\-0-9'\\#\\_]*" [token, autoReject]
 endmodule
 
-module KORE-SUGAR
+module KORE
   imports TOKENS
   imports INT-SYNTAX
   imports STRING-SYNTAX
 
-  syntax Ints ::= List{Int, ","}
-  syntax Sort ::= "Bool"        [token]
-                | "Int"         [token]
-                | "ArrayIntInt" [token]
-                | "SetInt"      [token]
+```
+We have two syntactic categories / sorts: `Sort` for
+all ML sorts and `Symbol` for all symbols. Their
+definitions are empty so we don't have specific theories
+in mind and instead the definition works for all theories.
+Modules that import and concretize the `KORE` module are
+called signature modules. 
+
+```k
+  syntax Sort
+  syntax Symbol
 ```
 
 We allow two "variaties" of variables: the first, identified by a String, is for
@@ -57,7 +67,21 @@ only in this scenario*.
                      /* Sugar for \iff, \mu and application */
                    | "\\iff-lfp" "(" Pattern "," Pattern ")"     [klabel(ifflfp)]
 
+  syntax Patterns ::= List{Pattern, ","}                        [klabel(Patterns)]
+  syntax Sorts ::= List{Sort, ","}                              [klabel(Sorts)]
 
+  syntax SymbolDeclaration ::= "symbol" Symbol "(" Sorts ")" ":" Sort
+endmodule
+```
+
+```k
+module KORE-SUGAR
+  imports KORE
+
+  syntax Sort ::= "Bool"        [token]
+                | "Int"         [token]
+                | "ArrayIntInt" [token]
+                | "SetInt"         [token]
   syntax Symbol ::= "emptyset"      [token]
                   | "singleton"     [token]
                   | "union"         [token]
@@ -78,11 +102,6 @@ only in this scenario*.
   // Array
   syntax Symbol ::= "store"         [token]
                   | "select"        [token]
-
-  syntax Patterns ::= List{Pattern, ","}                        [klabel(Patterns)]
-  syntax Sorts ::= List{Sort, ","}                              [klabel(Sorts)]
-
-  syntax SymbolDeclaration ::= "symbol" Symbol "(" Sorts ")" ":" Sort
 endmodule
 ```
 
@@ -98,6 +117,7 @@ module KORE-HELPERS
   imports INT
   imports STRING
 
+  syntax Ints ::= List{Int, ","}
   syntax String ::= SortToString(Sort) [function, functional, hook(STRING.token2string)]
 
   syntax Bool ::= Pattern "in" Patterns [function]
