@@ -74,7 +74,10 @@ only in this scenario*.
 
   rule \top()    => \and(.Patterns) [anywhere]
   rule \bottom() => \or(.Patterns) [anywhere]
+  syntax Patterns ::= List{Pattern, ","}                        [klabel(Patterns)]
+  syntax Sorts ::= List{Sort, ","}                              [klabel(Sorts)]
 
+  syntax SymbolDeclaration ::= "symbol" Symbol "(" Sorts ")" ":" Sort
 endmodule
 ```
 
@@ -106,6 +109,7 @@ module KORE-SUGAR
   // Array
   syntax Symbol ::= "store"         [token]
                   | "select"        [token]
+<<<<<<< HEAD
 ```
 
 The "Normal Forms" of Separation Logic
@@ -124,6 +128,8 @@ that represent separation logic formulas of certain "normal forms".
                   | "pto"           [token]
                   | "emp"           [token]
                   | "wand"          [token]   // separating implication
+=======
+>>>>>>> kore.md: start separating core and signature modules
 endmodule
 ```
 
