@@ -102,6 +102,13 @@ module KORE-SUGAR
   // Array
   syntax Symbol ::= "store"         [token]
                   | "select"        [token]
+
+  // Separation Logic
+  syntax Symbol ::= "sep"           [token]   // separating conjunction
+                  | "pto"           [token]
+                  | "emp"           [token]
+                  | "wand"          [token]   // separating implication
+
 endmodule
 ```
 
