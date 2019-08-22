@@ -1,0 +1,28 @@
+/* ./prover run --definition prover t/sll.prover */
+symbol ls(Int, Int) : Heap
+symbol list(Int) : Heap
+axiom \forall { variable("in") { Int }, variable("out") { Int } }
+      \iff-lfp( ls(variable("in") { Int }, variable("out") { Int })
+              , \or ( \exists {}
+                      \and( \equals( variable("in") { Int }
+                                   , variable("out") { Int })
+                          , emp())
+                    , \exists { variable("u") { Int } }
+                      \and( \not(\equals( variable("in") { Int }
+                                        , variable("out") { Int }))
+                          , sep( pto( variable("in") { Int }
+                                    , variable("u") { Int })
+                               , ls( variable("u") {Int}, variable("out") {Int })))))
+axiom \forall { variable("X") {Int} }
+\iff-lfp( list( variable("X") {Int})
+        , \or( \exists {} \and(\equals(variable("X") {Int}, 0), emp())
+             , \exists {variable("Y") {Int}}
+               \and( \not(\equals(variable("X"){Int}, 0))
+                   , sep(pto(variable("X") {Int}, variable("Y") {Int})
+                        , list(variable("Y") {Int})))))
+
+claim \implies( \and(sep( ls( variable("X") {Int}, variable("Y") {Int})
+                   , list(variable("Y") {Int})))
+              , \and(list(variable("X"){Int})))
+
+strategy noop

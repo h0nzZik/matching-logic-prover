@@ -82,6 +82,7 @@ module KORE-SUGAR
                 | "Int"         [token]
                 | "ArrayIntInt" [token]
                 | "SetInt"         [token]
+                | "Heap"            [token]
   syntax Symbol ::= "emptyset"      [token]
                   | "singleton"     [token]
                   | "union"         [token]

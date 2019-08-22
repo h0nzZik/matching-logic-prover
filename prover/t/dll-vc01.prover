@@ -1,0 +1,35 @@
+sort RefDll_t
+sort Dll_t
+
+symbol nil
+symbol next
+symbol prev
+symbol c_Dll_t
+
+sort Heap{RefDll_t,Dll_t}
+
+axiom
+\forall{fr:RefDll_t, bk:RefDll_t, pr:RefDll_t, nx:RefDll_t}
+\iff-lfp( dll(fr,bk,pr,nx)
+        , \or( \exists {}
+               \and( \equals(fr,nx)
+                   , \equals(bk,pr)
+                   , emp)
+             , \exists {u:RefDll_t}
+               \and( \distinct(fr,nx)  // === \not(\equals(fr,nx))
+                   , \distinct(bk,pr)
+                   , sep( pto(fr, c_Dll_t(u,pr))
+                        , dll(u,bk,fr,nx)))))
+
+claim
+\forall{ x_emp:RefDll_t
+       , w_emp:RefDll_t
+       , y_emp:RefDll_t
+       , z_emp:RefDll_t}
+\implies( \and( \distinct(x_emp,z_emp)
+              , \distinct(w_emp,z_emp)
+              , \distinct(y_emp,z_emp)
+              , sep( pto(x_emp, c_Dll_t(w_emp, nil))
+                   , pto(w_emp, c_Dll_t(y_emp, x_emp))
+                   , pto(y_emp, c_Dll_t(z_emp, w_emp))))
+        , dll(x_emp, y_emp, nil, z_emp))
