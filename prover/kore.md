@@ -71,6 +71,10 @@ only in this scenario*.
   syntax Sorts ::= List{Sort, ","}                              [klabel(Sorts)]
 
   syntax SymbolDeclaration ::= "symbol" Symbol "(" Sorts ")" ":" Sort
+
+  rule \top()    => \and(.Patterns) [anywhere]
+  rule \bottom() => \or(.Patterns) [anywhere]
+
 endmodule
 ```
 
