@@ -82,7 +82,6 @@ module KORE-SUGAR
                 | "Int"         [token]
                 | "ArrayIntInt" [token]
                 | "SetInt"         [token]
-                | "Heap"            [token]
   syntax Symbol ::= "emptyset"      [token]
                   | "singleton"     [token]
                   | "union"         [token]
@@ -103,15 +102,32 @@ module KORE-SUGAR
   // Array
   syntax Symbol ::= "store"         [token]
                   | "select"        [token]
+```
 
-  // Separation Logic
+The "Normal Forms" of Separation Logic
+=========================
+
+We define some basic sorts and symbols for separation logic.
+In addition, we identify some sub-syntactic categories of `Pattern`
+that represent separation logic formulas of certain "normal forms". 
+
+```k
+  syntax Sort ::= "Loc"  [token] 
+                | "Data" [token] 
+                | "Heap" [token] 
+
   syntax Symbol ::= "sep"           [token]   // separating conjunction
                   | "pto"           [token]
                   | "emp"           [token]
                   | "wand"          [token]   // separating implication
-
 endmodule
 ```
+
+A normal form has the following form:
+\exists VarList . \and ( Spatial , Pure )
+where Spatial has the form of
+  Spatial === \sep( ... ) // we may want to organize "..." more specifically later
+  Pure    === \and( ... ) // "..." are predicate patterns
 
 Kore Helpers
 ============

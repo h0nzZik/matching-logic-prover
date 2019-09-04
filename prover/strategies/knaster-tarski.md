@@ -462,6 +462,16 @@ If the subgoal in the first argument succeeds add the second argument to the LHS
   rule matchesForall(_) => false [owise]
 ```
 
+Separation Logic Normal Forms (NFs)
+===================================
+
+NF === exists { ... } . and ( seq (...) , and (...) )
+
+```k
+  rule <claim> \implies(\exists{_} P, Q) => \implies(\exists{.Patterns} P, Q) ...</claim>
+       <strategy> slnf-elim-ex-left => noop ...</strategy>
+```
+
 ```k
 endmodule
 ```

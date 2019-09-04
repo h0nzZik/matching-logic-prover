@@ -1,28 +1,48 @@
 /* ./prover run --definition prover t/sll.prover */
+
+/* Note that the normal form, shortened as NF,
+ * is defined in kore.md as follows:
+ * NF === \exists x y ... . \and ( sep(...) , \and(...) )
+ *                         --------   ---------
+ *                         spatial      pure
+ * Recursive definition has the form:
+ * \forall{x1,...,xn}
+ * \iff-lfp( p(x1,...,xn) , \or(WF1,...,WFk))
+ * 
+ * Claim/Obligation has the form:
+ * \implies (WF1, WF2)
+ */
+
 symbol ls(Int, Int) : Heap
 symbol list(Int) : Heap
 axiom \forall { variable("in") { Int }, variable("out") { Int } }
       \iff-lfp( ls(variable("in") { Int }, variable("out") { Int })
               , \or ( \exists {}
-                      \and( \equals( variable("in") { Int }
-                                   , variable("out") { Int })
-                          , emp())
+                      \and( sep ( emp() )
+                          , \and ( \equals( variable("in") { Int }
+                                   , variable("out") { Int })))
                     , \exists { variable("u") { Int } }
-                      \and( \not(\equals( variable("in") { Int }
-                                        , variable("out") { Int }))
-                          , sep( pto( variable("in") { Int }
+                      \and( sep( pto( variable("in") { Int }
                                     , variable("u") { Int })
-                               , ls( variable("u") {Int}, variable("out") {Int })))))
+                               , ls( variable("u") {Int}, variable("out") {Int })),
+                            \and( \not(\equals( variable("in") { Int }
+                                        , variable("out") { Int }))))))
 axiom \forall { variable("X") {Int} }
 \iff-lfp( list( variable("X") {Int})
-        , \or( \exists {} \and(\equals(variable("X") {Int}, 0), emp())
+        , \or( \exists {} 
+               \and( sep (emp())
+                   , \and(\equals(variable("X") {Int}, 0)))
              , \exists {variable("Y") {Int}}
-               \and( \not(\equals(variable("X"){Int}, 0))
-                   , sep(pto(variable("X") {Int}, variable("Y") {Int})
-                        , list(variable("Y") {Int})))))
+               \and( sep(pto(variable("X") {Int}, variable("Y") {Int})
+                        , list(variable("Y") {Int}))
+                   , \and(\not(\equals(variable("X"){Int}, 0))))))
 
-claim \implies( \and(sep( ls( variable("X") {Int}, variable("Y") {Int})
-                   , list(variable("Y") {Int})))
-              , \and(list(variable("X"){Int})))
+claim \implies( 
+\exists {} \and( 
+  sep( ls( variable("X") {Int}, variable("Y") {Int}) , list(variable("Y") {Int}))
+, \top()),
+\exists {} \and(
+  sep( list(variable("X"){Int}))
+, \top()))
 
-strategy noop
+strategy slnf-elim-ex-left

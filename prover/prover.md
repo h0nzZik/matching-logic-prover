@@ -66,6 +66,7 @@ module PROVER-HORN-CLAUSE-SYNTAX
                     | "right-unfold" | "right-unfold-Nth" "(" Int "," Int ")"
                     | "kt"     | "kt"     "#" KTFilter
                     | "kt-gfp" | "kt-gfp" "#" KTFilter
+                    | "slnf-elim-ex-left"
   syntax Strategy ::= "kt-solve-implications" "(" Strategy ")"
                     | "instantiate-universals-with-ground-terms"
 
