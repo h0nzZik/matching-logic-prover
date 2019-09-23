@@ -35,9 +35,15 @@ in mind and instead the definition works for all theories.
 Modules that import and concretize the `KORE` module are
 called signature modules. 
 
+We also define a syntactic category `Construct` for
+(user-defined) logic constructs and/or aliases and/or
+notations. The magic wand, for example, is a construct
+and not a symbol.
+
 ```k
   syntax Sort
   syntax Symbol
+  syntax Construct ::= Symbol
 ```
 
 We allow two "variaties" of variables: the first, identified by a String, is for
@@ -49,8 +55,8 @@ only in this scenario*.
   syntax Variable ::= VariableName "{" Sort "}" [klabel(sortedVariable)]
   syntax Pattern ::= Int
                    | Variable
-                   | Symbol
-                   | Symbol "(" Patterns ")"                    [klabel(apply)]
+                   | Construct 
+                   | Construct "(" Patterns ")"                 [klabel(apply)]
 
                    | "\\top"    "(" ")"                         [klabel(top)]
                    | "\\bottom" "(" ")"                         [klabel(bottom)]
@@ -111,9 +117,6 @@ module KORE-SUGAR
                   | "select"        [token]
 ```
 
-The "Normal Forms" of Separation Logic
-=========================
-
 We define some basic sorts and symbols for separation logic.
 In addition, we identify some sub-syntactic categories of `Pattern`
 that represent separation logic formulas of certain "normal forms". 
@@ -126,15 +129,10 @@ that represent separation logic formulas of certain "normal forms".
   syntax Symbol ::= "sep"           [token]   // separating conjunction
                   | "pto"           [token]
                   | "emp"           [token]
-                  | "wand"          [token]   // separating implication
+
+  syntax Construct ::= "wand"       [token]   // separating implication
 endmodule
 ```
-
-A normal form has the following form:
-\exists VarList . \and ( Spatial , Pure )
-where Spatial has the form of
-  Spatial === \sep( ... ) // we may want to organize "..." more specifically later
-  Pure    === \and( ... ) // "..." are predicate patterns
 
 Kore Helpers
 ============
@@ -150,6 +148,24 @@ module KORE-HELPERS
 
   syntax Ints ::= List{Int, ","}
   syntax String ::= SortToString(Sort) [function, functional, hook(STRING.token2string)]
+
+
+  // Syntax checking
+  syntax Bool ::= "isBasicConstraintPattern" "(" Pattern ")" [function]
+                | "isConstraintPattern" "(" Pattern ")"
+                | "isAtomicSpacialPattern" "(" Pattern ")"
+                | "isSpacialPattern" "(" Pattern ")"
+                | "isSLCanonicalForm" "(" Pattern ")"
+                | "isImplicationContext" "(" Pattern ")"
+                | "isDefinitionCase" "(" Pattern ")"
+                | "isDefinitionBody" "(" Pattern ")"
+                | "isDefinition" "(" Pattern ")"
+                | "isObligation" "(" Pattern ")"
+
+  rule isBasicConstraintPattern( \equals(X{Loc}, Y{Loc}) ) => true
+  rule isBasicConstraintPattern( \equals(X{Data}, Y{Data}) ) => true
+//  rule isBasicConstrinctPattern( \not(\equals(X{Loc}, Y{Loc})) ) => true 
+//  rule isBasicConstrinctPattern( \not(\equals(X{Data}, Y{Data})) ) => true
 
   syntax Bool ::= Pattern "in" Patterns [function]
   rule P in (P,  P1s) => true
