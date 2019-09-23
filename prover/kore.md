@@ -109,7 +109,6 @@ module KORE-SUGAR
   // Array
   syntax Symbol ::= "store"         [token]
                   | "select"        [token]
-<<<<<<< HEAD
 ```
 
 The "Normal Forms" of Separation Logic
@@ -128,8 +127,6 @@ that represent separation logic formulas of certain "normal forms".
                   | "pto"           [token]
                   | "emp"           [token]
                   | "wand"          [token]   // separating implication
-=======
->>>>>>> kore.md: start separating core and signature modules
 endmodule
 ```
 
