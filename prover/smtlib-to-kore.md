@@ -5,9 +5,8 @@ module SMTLIB-TO-KORE
   imports PROVER-CONFIGURATION
   imports SMTLIB2
   imports SMTLIB-SL
-  imports PROVER-CORE-SYNTAX
+  imports PROVER-COMMON
   imports PROVER-HORN-CLAUSE-SYNTAX
-//  imports STRATEGY
 
   rule <k> S:SMTLIB2Script
         => \exists { .Patterns } \and( .Patterns ) ~> S
@@ -60,7 +59,7 @@ module SMTLIB-TO-KORE
        </declarations>
 
   rule <k> P:Pattern ~> (check-sat) ~> (set-info :mlprover-strategy S) .SMTLIB2Script
-        => claim \not(P) strategy S ~> P
+        => strategy S  ~> claim \not(P) ~> P
            ...
       </k>
 

@@ -68,11 +68,15 @@ module SMTLIB2
                           | "(" "define-sort"      SMTLIB2Symbol "(" SMTLIB2SortList ")" SMTLIB2Sort ")"
                           | "(" "declare-sort"     SMTLIB2Sort Int ")"
                           | "(" "set-logic"        SMTLIB2Symbol ")"
+                          | "(" "set-info"         SMTLIB2Attribute SMTLIB2AttributeValue ")"
                           | "(" "check-sat" ")"
-  syntax SMTLIB2Script ::= List{SMTLIB2Command, ""} [klabel(SMTLIB2Script)]
 
-// For parsing strategies in smt files
-  syntax SMTLIB2Command ::= "(" "set-info" ":mlprover-strategy" Strategy ")"
+  syntax SMTLIB2Attribute ::= ":status"
+  syntax SMTLIB2AttributeValue ::= CheckSATResult
+  syntax SMTLIB2Attribute ::= ":mlprover-strategy"
+  syntax SMTLIB2AttributeValue ::= Strategy
+
+  syntax SMTLIB2Script ::= List{SMTLIB2Command, ""} [klabel(SMTLIB2Script)]
 
 // Core symbols
   syntax SMTLIB2SimpleSymbol ::= "not"   [token]
@@ -105,9 +109,12 @@ module SMTLIB2
                                | "map"    [token]
 
   // Sorts
-  syntax SMTLIB2SimpleSymbol ::= "Int" [token] | "Bool" [token]
-                               | "Set" [token] | "Array" [token]
-                               | "Heap" [token]
+  syntax SMTLIB2SimpleSymbol ::= UpperName
+                               | "Int"   [token, autoReject]
+                               | "Bool"  [token, autoReject]
+                               | "Set"   [token, autoReject]
+                               | "Array" [token, autoReject]
+                               | "Heap"  [token, autoReject]
 
   syntax CheckSATResult ::= "sat" | "unsat"
                           | "unknown" "(" K ")" | "error" "(" K ")"

@@ -24,15 +24,21 @@ information. Eventually, this could be used for constructing a proof object.
 module PROVER-CONFIGURATION
   imports KORE-SUGAR
   imports DOMAINS-SYNTAX
+  import SMTLIB2
 
   syntax Pgm
   syntax Strategy
 
   syntax GoalId ::= "root" | Int
+  
+  syntax None ::= "#none"
+  syntax MaybeStrategy ::= None | Strategy
+  syntax MaybeExpect ::= None | CheckSATResult
+  syntax KItem ::= goalBuilder(Pattern, MaybeStrategy, MaybeExpect)
 
   configuration
       <prover>
-        <k> $PGM:Pgm </k>
+        <k> goalBuilder(\top(), #none, #none) ~> $PGM:Pgm </k>
         <goals>
           <goal multiplicity="*" type="Set">
             <id> root </id>
@@ -41,11 +47,14 @@ module PROVER-CONFIGURATION
             <claim> .K </claim>
             <strategy> .K </strategy>
             <trace> .K </trace>
+            <expect> .K </expect>
           </goal>
         </goals>
         <declarations>
           <declaration multiplicity="*" type="Set">  .K </declaration>
         </declarations>
+        <exit-code exit=""> 1 </exit-code>
+        <expect-status> .K </expect-status>
       </prover>
 endmodule
 ```
@@ -90,6 +99,10 @@ module PROVER-COMMON
 
   syntax Pgm ::= SMTLIB2Script
                | Declarations
+
+  syntax Declaration ::= "claim" Pattern
+                       | "strategy" Strategy
+                       | "expect" CheckSATResult
   syntax Declarations ::= Declaration Declarations
 endmodule
 
@@ -140,8 +153,9 @@ module PROVER-DRIVER
          (.Bag => <declaration> DECL </declaration>)
          ...
        </declarations>
-  rule <k> claim PATTERN
-           strategy STRAT
+
+  syntax KItem ::= buildGoal(Pattern, Strategy, CheckSATResult)
+  rule <k> buildGoal(PATTERN, STRAT, EXPECT)
         => .K
            ...
        </k>
@@ -153,7 +167,7 @@ module PROVER-DRIVER
              <parent> .K </parent>
              <claim> PATTERN </claim>
              <strategy> STRAT </strategy>
-             <trace> .K </trace>
+             <expect> EXPECT </expect>
            </goal>
          )
          ...

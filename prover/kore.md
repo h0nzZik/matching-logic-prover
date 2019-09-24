@@ -25,11 +25,12 @@ module KORE-SUGAR
   imports STRING-SYNTAX
 
   syntax Ints ::= List{Int, ","}
-  syntax Sort ::= "Bool"        [token]
-                | "Int"         [token]
-                | "ArrayIntInt" [token]
-                | "SetInt"      [token]
-                | "Heap"        [token]
+  syntax Sort ::= UpperName
+                | "Bool"        [token, autoReject]
+                | "Int"         [token, autoReject]
+                | "ArrayIntInt" [token, autoReject]
+                | "SetInt"      [token, autoReject]
+                | "Heap"        [token, autoReject]
 ```
 
 We allow two "variaties" of variables: the first, identified by a String, is for
