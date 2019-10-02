@@ -131,26 +131,6 @@ Bring predicate constraints to the top of a term.
   rule #liftConstraints(sep(\and(P, Ps), REST))
     => \and(#liftConstraints(sep(\and(Ps), P, REST)))
     requires isSpatialPattern(P)
-
-  syntax Bool ::= isPredicatePattern(Pattern) [function]
-  rule isPredicatePattern(\equals(_, _)) => true
-  rule isPredicatePattern(\not(P)) => isPredicatePattern(P)
-  rule isPredicatePattern(\and(.Patterns)) => true
-  rule isPredicatePattern(\and(P, Ps)) => isPredicatePattern(P) andBool isPredicatePattern(\and(Ps))
-  rule isPredicatePattern(S:Symbol(ARGS)) => getReturnSort(S(ARGS)) ==K Bool
- 
-  rule isPredicatePattern(sep(_)) => false  
-  rule isPredicatePattern(pto(_)) => false  
-  
-  syntax Bool ::= isSpatialPattern(Pattern) [function]
-  rule isSpatialPattern(pto(_)) => true
-  rule isSpatialPattern(sep(.Patterns)) => true
-  rule isSpatialPattern(sep(P, Ps)) => isSpatialPattern(P) andBool isSpatialPattern(sep(Ps))
-  rule isSpatialPattern(P) => false
-    requires isPredicatePattern(P)
-  rule isSpatialPattern(\and(_)) => false
-  rule isSpatialPattern(S:Symbol(ARGS)) => getReturnSort(S(ARGS)) ==K Heap
-    requires isUnfoldable(S)
 ```
 
 ### lift-or

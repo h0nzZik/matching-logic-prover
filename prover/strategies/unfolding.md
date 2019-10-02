@@ -27,6 +27,7 @@ module STRATEGY-UNFOLDING
   rule getUnfoldables(S:Symbol(ARGS), REST)
     => getUnfoldables(REST)
     requires notBool isUnfoldable(S)
+    andBool S =/=K sep
   rule getUnfoldables(I:Int, REST)
     => getUnfoldables(REST)
   rule getUnfoldables(V:Variable, REST)
@@ -34,6 +35,8 @@ module STRATEGY-UNFOLDING
   rule getUnfoldables(\not(Ps), REST)
     => getUnfoldables(Ps) ++Patterns getUnfoldables(REST)
   rule getUnfoldables(\and(Ps), REST)
+    => getUnfoldables(Ps) ++Patterns getUnfoldables(REST)
+  rule getUnfoldables(sep(Ps), REST)
     => getUnfoldables(Ps) ++Patterns getUnfoldables(REST)
   rule getUnfoldables(\or(Ps), REST)
     => getUnfoldables(Ps) ++Patterns getUnfoldables(REST)
@@ -144,6 +147,7 @@ Note that the resulting goals is stonger than the initial goal (i.e.
 ```
 
 ```k
+  // TODO: -Patterns does not work here. We need to substitute RRP with BODY
   rule <claim> \implies(LHS, \exists { E1 } \and(RHS))
         => \implies(LHS, \exists { E1 ++Patterns E2 }
                          \and((RHS -Patterns (RRP, .Patterns)) ++Patterns BODY))
