@@ -106,6 +106,53 @@ Normalize:
     [owise]
 ```
 
+### lift-constraints
+
+Bring predicate constraints to the top of a term.
+
+```k
+  rule <claim> \implies(\and(P, Ps) => \and(#flattenAnds(#liftConstraints(P), Ps))
+                       , _
+                       )
+       </claim>
+       <strategy> lift-constraints => noop ... </strategy>
+
+  syntax Pattern ::= #liftConstraints(Pattern) [function]
+  rule #liftConstraints(P) => P
+    requires isPredicatePattern(P)
+  rule #liftConstraints(P) => P
+    requires isSpatialPattern(P)
+    
+  rule #liftConstraints(sep(\and(.Patterns), REST))
+    => \and(#liftConstraints(sep(REST)))
+  rule #liftConstraints(sep(\and(P, Ps), REST))
+    => \and(#liftConstraints(sep(\and(Ps), REST)), P)
+    requires isPredicatePattern(P)
+  rule #liftConstraints(sep(\and(P, Ps), REST))
+    => \and(#liftConstraints(sep(\and(Ps), P, REST)))
+    requires isSpatialPattern(P)
+
+  syntax Bool ::= isPredicatePattern(Pattern) [function]
+  rule isPredicatePattern(\equals(_, _)) => true
+  rule isPredicatePattern(\not(P)) => isPredicatePattern(P)
+  rule isPredicatePattern(\and(.Patterns)) => true
+  rule isPredicatePattern(\and(P, Ps)) => isPredicatePattern(P) andBool isPredicatePattern(\and(Ps))
+  rule isPredicatePattern(S:Symbol(ARGS)) => getReturnSort(S(ARGS)) ==K Bool
+ 
+  rule isPredicatePattern(sep(_)) => false  
+  rule isPredicatePattern(pto(_)) => false  
+  
+  syntax Bool ::= isSpatialPattern(Pattern) [function]
+  rule isSpatialPattern(pto(_)) => true
+  rule isSpatialPattern(sep(.Patterns)) => true
+  rule isSpatialPattern(sep(P, Ps)) => isSpatialPattern(P) andBool isSpatialPattern(sep(Ps))
+  rule isSpatialPattern(P) => false
+    requires isPredicatePattern(P)
+  rule isSpatialPattern(\and(_)) => false
+  rule isSpatialPattern(S:Symbol(ARGS)) => getReturnSort(S(ARGS)) ==K Heap
+    requires isUnfoldable(S)
+```
+
 ### lift-or
 
 Lift `\or`s on the left hand sides of implications

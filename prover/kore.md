@@ -17,8 +17,8 @@ endmodule
 
 module TOKENS-SYNTAX
   imports TOKENS
-  syntax UpperName ::= r"[A-Z][A-Za-z\\-0-9'\\#\\_]*" [token, autoReject]
-  syntax LowerName ::= r"[a-z][A-Za-z\\-0-9'\\#\\_]*" [token, autoReject]
+  syntax UpperName ::= r"[A-Z][A-Za-z\\-0-9'\\#\\_]*"  [prec(2), token, autoReject]
+  syntax LowerName ::= r"[a-z][A-Za-z\\-0-9'\\#\\_]*"  [prec(2), token, autoReject]
   syntax ColonName ::= r":[a-z][A-Za-z\\-0-9'\\#\\_]*" [token, autoReject]
   // TODO: PipeQID interacts badly with _ | _ strategy
   // syntax PipeQID ::= r"\\|[^\\|]*\\|" [token, autoReject]
@@ -171,6 +171,11 @@ module KORE-HELPERS
   rule getReturnSort( gt ( ARGS ) ) => Bool
   rule [[ getReturnSort( R ( ARGS ) )  => S ]]
        <declaration> symbol R ( _ ) : S </declaration>
+
+  syntax Bool ::= isUnfoldable(Symbol) [function]
+  rule [[ isUnfoldable(S:Symbol) => true ]]
+       <declaration> axiom \forall {_} \iff-lfp(S(_), _) </declaration>
+  rule isUnfoldable(S:Symbol) => false [owise]
 
   syntax Patterns ::= getGroundTerms(Pattern) [function]
   rule getGroundTerms(P) => getGroundTerms(P, .Patterns)
@@ -397,6 +402,9 @@ Simplifications
   syntax Patterns ::= #not(Patterns) [function]
   rule #not(.Patterns) => .Patterns
   rule #not(P, Ps) => \not(P), #not(Ps)
+  
+  syntax Pattern ::= #flattenAnd(Pattern) [function]
+  rule #flattenAnd(\and(Ps)) => \and(#flattenAnds(Ps))
 
   syntax Patterns ::= #flattenAnds(Patterns) [function]
   rule #flattenAnds(\and(Ps1), Ps2) => #flattenAnds(Ps1) ++Patterns #flattenAnds(Ps2)

@@ -4,11 +4,6 @@ module STRATEGY-UNFOLDING
   imports PROVER-HORN-CLAUSE-SYNTAX
   imports KORE-HELPERS
 
-  syntax Bool ::= isUnfoldable(Symbol) [function]
-  rule [[ isUnfoldable(S:Symbol) => true ]]
-       <declaration> axiom \forall {_} \iff-lfp(S(_), _) </declaration>
-  rule isUnfoldable(S:Symbol) => false [owise]
-
   syntax Pattern ::= unfold(Pattern) [function]
   rule [[ unfold(S:Symbol(ARGs)) => alphaRename(substMap(DEF, zip(Vs, ARGs))) ]]
        <declaration> axiom \forall { Vs } \iff-lfp(S(Vs), DEF) </declaration>
