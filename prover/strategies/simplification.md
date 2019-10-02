@@ -112,7 +112,7 @@ Bring predicate constraints to the top of a term.
 
 ```k
   rule <claim> \implies(\and(P, Ps) => \and(#flattenAnds(#liftConstraints(P), Ps))
-                       , _
+                       , \exists { _ } (\and(R, Rs) => \and(#flattenAnds(#liftConstraints(R), Rs)))
                        )
        </claim>
        <strategy> lift-constraints => noop ... </strategy>
@@ -122,7 +122,7 @@ Bring predicate constraints to the top of a term.
     requires isPredicatePattern(P)
   rule #liftConstraints(P) => P
     requires isSpatialPattern(P)
-    
+
   rule #liftConstraints(sep(\and(.Patterns), REST))
     => \and(#liftConstraints(sep(REST)))
   rule #liftConstraints(sep(\and(P, Ps), REST))
@@ -131,6 +131,13 @@ Bring predicate constraints to the top of a term.
   rule #liftConstraints(sep(\and(P, Ps), REST))
     => \and(#liftConstraints(sep(\and(Ps), P, REST)))
     requires isSpatialPattern(P)
+
+  rule #liftConstraints(\and(\and(Ps), REST))
+    => #liftConstraints(\and(Ps ++Patterns REST))
+
+  rule #liftConstraints(\and(P, Ps), REST)
+     =>
+  requires isPredicatePattern(P) and
 ```
 
 ### lift-or

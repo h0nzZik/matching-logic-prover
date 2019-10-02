@@ -336,6 +336,8 @@ Substitution: Substitute term or variable
   rule subst(S:Symbol(ARGS:Patterns) #as T:Pattern, X, V) => S(ARGS[X/V])
     requires T =/=K X
 
+  rule subst(R,_,_) => R [owise]
+
   syntax Pair ::= pair(Patterns, Patterns)
   syntax Pair ::= unzip(Map) [function]
   rule unzip(.Map) => pair(.Patterns, .Patterns)
