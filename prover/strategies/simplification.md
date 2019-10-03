@@ -111,17 +111,17 @@ Normalize:
 Bring predicate constraints to the top of a term.
 
 ```k
-  rule <claim> \implies(\and(P, Ps) => \and(#flattenAnds(#liftConstraints(P), Ps))
-                       , \exists { _ } (\and(R, Rs) => \and(#flattenAnds(#liftConstraints(R), Rs)))
+  rule <claim> \implies(\and(Ps) => \and(#flattenAnds(#liftConstraints(Ps)))
+                       , \exists { _ } (\and(Rs) => \and(#flattenAnds(#liftConstraints(Rs))))
                        )
        </claim>
        <strategy> lift-constraints => noop ... </strategy>
 
-  syntax Pattern ::= #liftConstraints(Pattern) [function]
-  rule #liftConstraints(P) => P
+  syntax Patterns ::= #liftConstraints(Patterns) [function]
+  rule #liftConstraints(P, .Patterns) => P
     requires isPredicatePattern(P)
-  rule #liftConstraints(P) => P
-    requires isSpatialPattern(P)
+  rule #liftConstraints(S, P) => \and(S, P)
+    requires isSpatialPattern(S) andBool isPredicatePattern(P)
 
   rule #liftConstraints(sep(\and(.Patterns), REST))
     => \and(#liftConstraints(sep(REST)))
@@ -133,7 +133,7 @@ Bring predicate constraints to the top of a term.
     requires isSpatialPattern(P)
 
   rule #liftConstraints(\and(\and(Ps), REST))
-    => #liftConstraints(\and(Ps ++Patterns REST))
+    => \and(#liftConstraints(Ps ++Patterns REST))
 
   rule #liftConstraints(\and(P, Ps))
      => #liftConstraints(\and(Ps ++Patterns P))
