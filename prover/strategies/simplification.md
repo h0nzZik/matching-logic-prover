@@ -135,9 +135,9 @@ Bring predicate constraints to the top of a term.
   rule #liftConstraints(\and(\and(Ps), REST))
     => #liftConstraints(\and(Ps ++Patterns REST))
 
-  rule #liftConstraints(\and(P, Ps), REST)
-     =>
-  requires isPredicatePattern(P) and
+  rule #liftConstraints(\and(P, Ps))
+     => #liftConstraints(\and(Ps ++Patterns P))
+  requires isPredicatePattern(P) andBool notBool isPredicatePattern(\and(P, Ps))
 ```
 
 ### lift-or
