@@ -412,7 +412,7 @@ Simplifications
 
   syntax Patterns ::= #flattenAnds(Patterns) [function]
   rule #flattenAnds(\and(Ps1), Ps2) => #flattenAnds(Ps1) ++Patterns #flattenAnds(Ps2)
-  rule #flattenAnds(P, Ps) => P ++Patterns #flattenAnds(Ps) [owise]
+  rule #flattenAnds(P, Ps) => P, #flattenAnds(Ps) [owise]
   rule #flattenAnds(.Patterns) => .Patterns
 
   syntax Patterns ::= #flattenOrs(Patterns) [function]

@@ -111,32 +111,46 @@ Normalize:
 Bring predicate constraints to the top of a term.
 
 ```k
-  rule <claim> \implies(\and(Ps) => \and(#flattenAnds(#liftConstraints(Ps)))
-                       , \exists { _ } (\and(Rs) => \and(#flattenAnds(#liftConstraints(Rs))))
+  rule <claim> \implies(\and(Ps) => #flattenAnd(#liftConstraints(\and(Ps)))
+                       , \exists { _ } (\and(Rs) => #flattenAnd(#liftConstraints(\and(Rs))))
                        )
        </claim>
        <strategy> lift-constraints => noop ... </strategy>
 
-  syntax Patterns ::= #liftConstraints(Patterns) [function]
-  rule #liftConstraints(P, .Patterns) => P
-    requires isPredicatePattern(P)
-  rule #liftConstraints(S, P) => \and(S, P)
-    requires isSpatialPattern(S) andBool isPredicatePattern(P)
+  syntax Pattern ::= #liftConstraints(Pattern) [function]
+  rule #liftConstraints(P) => P requires isPredicatePattern(P)
+  rule #liftConstraints(S) => S requires isSpatialPattern(S)
 
-  rule #liftConstraints(sep(\and(.Patterns), REST))
-    => \and(#liftConstraints(sep(REST)))
-  rule #liftConstraints(sep(\and(P, Ps), REST))
-    => \and(#liftConstraints(sep(\and(Ps), REST)), P)
+  rule #liftConstraints(sep(\and(.Patterns), REST)) => #liftConstraints(sep(REST))
+
+  rule #liftConstraints(sep(\and(P, Ps:Patterns), REST:Patterns))
+    => #liftConstraints(\and(sep(\and(Ps), REST), P, .Patterns))
     requires isPredicatePattern(P)
   rule #liftConstraints(sep(\and(P, Ps), REST))
-    => \and(#liftConstraints(sep(\and(Ps), P, REST)))
+    => #liftConstraints(sep(\and(Ps), P, REST))
     requires isSpatialPattern(P)
+  rule #liftConstraints(sep(\and(P, Ps), REST))
+    => #liftConstraints(sep(\and(#flattenAnds(#liftConstraints(P), Ps)), REST))
+    requires notBool isPredicatePattern(P) andBool notBool isSpatialPattern(P)
+
+  // Rotate
+  rule #liftConstraints(sep(S, Ps))
+    => #liftConstraints(sep(Ps ++Patterns S))
+    requires isSpatialPattern(S) andBool notBool isSpatialPattern(sep(S, Ps))
+
+  rule #liftConstraints(\and(sep(Ss), Ps))
+    => #liftConstraints(\and(#flattenAnds(#liftConstraints(sep(Ss)), .Patterns) ++Patterns Ps))
+    requires notBool isSpatialPattern(sep(Ss))
+
+  rule #liftConstraints(\and(S, Ps))
+    => \and(S, #flattenAnds(#liftConstraints(\and(Ps)), .Patterns))
+    requires isSpatialPattern(S)
 
   rule #liftConstraints(\and(\and(Ps), REST))
-    => \and(#liftConstraints(Ps ++Patterns REST))
+    => #liftConstraints(\and(Ps ++Patterns REST))
 
   rule #liftConstraints(\and(P, Ps))
-     => #liftConstraints(\and(Ps ++Patterns P))
+    => #liftConstraints(\and(Ps ++Patterns P))
   requires isPredicatePattern(P) andBool notBool isPredicatePattern(\and(P, Ps))
 ```
 
