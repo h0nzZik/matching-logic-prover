@@ -34,7 +34,7 @@ module STRATEGY-MATCHING
     [owise]
     
   rule #match( terms: Ts, patterns: _, variables: Vs)
-    => #matchFailure( "..." )
+    => #matchFailure( "AlphaRenaming not done" )
      , .MatchResults
     requires getFreeVariables(Ts) intersect Vs =/=K .Patterns 
 
@@ -45,8 +45,17 @@ module STRATEGY-MATCHING
     => #matchResult( subst: removeIdentityMappings(zip(P_ARGs, ARGs)), rest: .Patterns )
      , .MatchResults
     requires S =/=K sep
-    andBool notBool( getFreeVariables(Ts) intersect Vs =/=K .Patterns )
+    andBool notBool(getFreeVariables(Ts) intersect Vs =/=K .Patterns)
     andBool checkSubstitution(removeIdentityMappings(zip(P_ARGs, ARGs)), Vs)
+    
+  rule #match( terms:     (S:Symbol(ARGs), .Patterns) #as Ts
+             , patterns:  S:Symbol(P_ARGs)
+             , variables: Vs
+             )
+    => .MatchResults
+    requires S =/=K sep
+    andBool notBool(getFreeVariables(Ts) intersect Vs =/=K .Patterns)
+    andBool notBool(checkSubstitution(removeIdentityMappings(zip(P_ARGs, ARGs)), Vs))
 
   syntax Bool ::= checkSubstitution(Map, Patterns) [function] 
   rule checkSubstitution( .Map , Vs ) => true
