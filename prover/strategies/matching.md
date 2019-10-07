@@ -6,17 +6,15 @@ module STRATEGY-MATCHING
   imports KORE-HELPERS
   imports MAP
   
-//  rule <claim> \implies(\and(LSPATIAL, LHS) , \exists { Vs } \and(RSPATIAL, RHS)) </claim>
-//       <strategy> match => #matchAux( term: LSPATIAL
-//                                 , pattern: RSPATIAL
-//                                 , vars: Vs
-//                                 , rest: .Patterns
-//                                 , results: .MatchResults
-//                                 )
-//                  ...
-//       </strategy>
-//    requires isSpatialPattern(LSPATIAL)
-//     andBool isSpatialPattern(RSPATIAL)
+  rule <claim> \implies(\and(LSPATIAL, LHS) , \exists { Vs } \and(RSPATIAL, RHS)) </claim>
+       <strategy> match => #match( term: LSPATIAL
+                                 , pattern: RSPATIAL
+                                 , variables: Vs
+                                 )
+                  ...
+       </strategy>
+    requires isSpatialPattern(LSPATIAL)
+     andBool isSpatialPattern(RSPATIAL)
 
                                          /* Subst, Rest */
   syntax MatchResult ::= "#matchResult" "(" "subst:" Map "," "rest:" Patterns ")"
@@ -241,6 +239,14 @@ module TEST-MATCHING-SYNTAX
     
     syntax KItem ::= Pattern // TODO: Explain why we're doing this
     syntax VariableName ::= "W" [token] | "X" [token] | "Y" [token] | "Z" [token]
+                          | "W1" [token]
+                          | "W2" [token]
+                          | "X1" [token]
+                          | "X2" [token]
+                          | "Y1" [token]
+                          | "Y2" [token]
+                          | "Z1" [token]
+                          | "Z2" [token]
     syntax Sort         ::= "Data" [token] | "Loc" [token]
 endmodule
 
@@ -254,48 +260,3 @@ module TEST-MATCHING
 endmodule
 ```
 
-
-```
-```
-#matchAux( term:    S(ARGs)
-        pattern: S(P_ARGs)
-        vars: VARS
-      )
-=> #checksomthing(zip(P_ARGs, ARGs))
-    requires S =/=K sep
-
-#matchAux( term:    S1(_)
-        pattern: S2(_)
-        vars: VARS
-      )
-=> .MatchResults
-   requires S1 =/=K sep
-    andBool S2 =/=K sep
-    andBool S1 =/=K S2
-    
- #matchAux( term:   sep(ARGs)
-         pattern: sep(P_ARG, P_ARGs)
-         vars: VARS
-      )
-=> #matchAux( term:   sep(ARGs)
-           pattern: sep(P_ARGs)
-           vars: VARS
-           rest: 
-           num_rotations: length(P_ARGs) 
-           recursive_results: 
-         )
-  ++
-
-#match ( term:    sep ( pto ( Vy { RefGTyp } , c_GTyp ( Vz { RefGTyp } ) ) , pto ( Vx { RefGTyp } , c_GTyp ( Vy { RefGTyp } ) ) ) 
-       , pattern: sep ( pto ( Vx { RefGTyp } , c_GTyp ( F9 { RefGTyp } ) ) , pto ( F9 { RefGTyp } , c_GTyp ( Vz { RefGTyp } ) ) ) 
-       , free:    F9 { RefGTyp }
-       )
-       
- --- Get list of terms that "sep( pto ( Vx { RefGTyp } , c_GTyp ( F9 { RefGTyp } ) ), REST )" can match with in TERM
-      --- Get list of terms that "sep( pto ( Vx { RefGTyp } , c_GTyp ( F9 { RefGTyp } ) ), REST )" can match with in "sep( pto ( Vy { RefGTyp } , c_GTyp ( Vz { RefGTyp } ) ))"
-          => .MatchResults
-      --- Get list of terms that "sep( pto ( Vx { RefGTyp } , c_GTyp ( F9 { RefGTyp } ) ), REST )" can match with in "pto ( F9 { RefGTyp } , c_GTyp ( Vz { RefGTyp } ) )"
-          => Result: Match: pto ( Vx { RefGTyp } , c_GTyp ( Vy { RefGTyp } ) )
-                     Subst: F9 |-> Vy
-                 Rest:  pto ( Vy { RefGTyp } , c_GTyp ( Vz { RefGTyp } ) )
- --- For each result above result, apply substitution and recurse
