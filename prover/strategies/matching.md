@@ -74,14 +74,6 @@ module STRATEGY-MATCHING
     requires S =/=K sep
     andBool checkSubstitution(removeIdentityMappings(zip(P_ARGs, ARGs)), Vs)
 
-  rule #matchAux( terms:     .Patterns
-                , pattern:   _
-                , variables: _
-                , results:   .Maps
-                , subst:     _
-                )
-    => .Maps
-
   rule #matchAux( terms:     S:Symbol(ARGs), .Patterns
                 , pattern:   S:Symbol(P_ARGs)
                 , variables: Vs
@@ -100,6 +92,14 @@ module STRATEGY-MATCHING
                 )
     => SUBST; .Maps
 
+  rule #matchAux( terms:     sep(.Patterns), .Patterns
+                , pattern:   sep(P, Ps)
+                , variables: Vs
+                , results:   .Maps
+                , subst:     SUBST
+                )
+    => .Maps
+
   rule #matchAux( terms:     sep(ARGs), .Patterns
                 , pattern:   sep(P_ARG, P_ARGs)
                 , variables: Vs
@@ -117,6 +117,7 @@ module STRATEGY-MATCHING
                                       )
                 , subst:     SUBST
                 )
+    requires ARGs =/=K .Patterns
 
   rule #matchAux( terms:     Ts
                 , pattern:   P
@@ -248,8 +249,8 @@ module TEST-MATCHING
   imports PROVER-DRIVER
 
   syntax Sort         ::= "Data" | "Loc"
-  syntax Declaration ::= assertEqual(MatchResults, MatchResults)
-  rule assertEqual(EXPECTED, EXPECTED) => .K
+  syntax Declaration ::= "assert" "(" MatchResults "==" MatchResults ")"
+  rule assert(EXPECTED == EXPECTED) => .K
 endmodule
 ```
 

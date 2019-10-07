@@ -1,4 +1,4 @@
-assertEqual( , )
+assert( , )
 assertEqual( #matchResult( subst: Z { Loc }  |-> X { Loc }
                                   W { Data } |-> Y { Data }
                          , rest: 
@@ -42,5 +42,35 @@ assertEqual(
            , #match( term:      sep()
                    , pattern:   sep( pto( Z { Loc }, W { Data }) )
                    , variables: Z { Loc }, W { Data }
+                   )
+           )
+assertEqual( #matchResult( subst: .Map
+                         , rest:
+                         )
+           , #match( term:      sep()
+                   , pattern:   sep()
+                   , variables:
+                   )
+           )
+assertEqual( ( #matchResult( subst: Z1 { Loc }  |-> X1 { Loc }
+                                    W1 { Data } |-> Y1 { Data }
+                                    Z2 { Loc }  |-> X2 { Loc }
+                                    W2 { Data } |-> Y2 { Data }
+                           , rest: 
+                           )
+             , #matchResult( subst: Z1 { Loc }  |-> X2 { Loc }
+                                    W1 { Data } |-> Y2 { Data }
+                                    Z2 { Loc }  |-> X1 { Loc }
+                                    W2 { Data } |-> Y1 { Data }
+                           , rest: 
+                           )
+             )
+           , #match( term:      sep( pto( X1 { Loc }, Y1 { Data })
+                                   , pto( X2 { Loc }, Y2 { Data })
+                                   )
+                   , pattern:   sep( pto( Z1 { Loc }, W1 { Data })
+                                   , pto( Z2 { Loc }, W2 { Data })
+                                   )
+                   , variables: Z1 { Loc }, W1 { Data }, Z2 { Loc }, W2 { Data }
                    )
            )
