@@ -3,45 +3,44 @@ assertEqual( #matchResult( subst: Z { Loc }  |-> X { Loc }
                                   W { Data } |-> Y { Data }
                          , rest: 
                          )
-           , #match( term:     pto( X { Loc }, Y { Data }) 
-                   , pattern:  pto( Z { Loc }, W { Data })
+           , #match( term:      pto( X { Loc }, Y { Data }) 
+                   , pattern:   pto( Z { Loc }, W { Data })
                    , variables: Z { Loc }, W { Data }
                    )
            )
-// assertEqual( #matchFailure("AlphaRenaming not done")
-//            , #match( term:     pto( Z { Loc }, Y { Data }) 
-//                    , pattern:  pto( Z { Loc }, W { Data })
-//                    , variables: Z { Loc }, W { Data }
-//                    )
-//            )
+assertEqual( #matchFailure("AlphaRenaming not done")
+           , #match( term:      pto( Z { Loc }, Y { Data }) 
+                   , pattern:   pto( Z { Loc }, W { Data })
+                   , variables: Z { Loc }, W { Data }
+                   )
+           )
 
-
-// assertEqual(
-//            , #match( term:     pto( X { Loc }, Y { Data }) 
-//                    , pattern:  pto( Z { Loc }, W { Data })
-//                    , variables: W { Data }
-//                    )
-//            )
-// // assertEqual( #matchResult( subst: .Map
-// //                          , rest: pto( X { Loc }, Y { Data })
-// //                          )
-// //            , #match( term:     sep( pto( X { Loc }, Y { Data }) )
-// //                    , pattern:  sep()
-// //                    , variables:
-// //                    )
-// //            )
-// assertEqual( #matchResult( subst: Z { Loc }  |-> X { Loc }
-//                                   W { Data } |-> Y { Data }
-//                          , rest: 
-//                          )
-//            , #match( term:     sep( pto( X { Loc }, Y { Data }) )
-//                    , pattern:  sep( pto( Z { Loc }, W { Data }) )
-//                    , variables: Z { Loc }, W { Data }
-//                    )
-//            )
-// // assertEqual( 
-// //            , #match( term:     sep()
-// //                    , pattern:  sep( pto( Z { Loc }, W { Data }) )
-// //                    , variables: Z { Loc }, W { Data }
-// //                    )
-// //            )
+assertEqual(
+           , #match( term:      pto( X { Loc }, Y { Data }) 
+                   , pattern:   pto( Z { Loc }, W { Data })
+                   , variables: W { Data }
+                   )
+           )
+assertEqual( #matchResult( subst: .Map
+                         , rest:  pto( X { Loc }, Y { Data })
+                         )
+           , #match( term:      sep( pto( X { Loc }, Y { Data }) )
+                   , pattern:   sep()
+                   , variables:
+                   )
+           )
+assertEqual( #matchResult( subst: Z { Loc }  |-> X { Loc }
+                                  W { Data } |-> Y { Data }
+                         , rest: 
+                         )
+           , #match( term:      sep( pto( X { Loc }, Y { Data }) )
+                   , pattern:   sep( pto( Z { Loc }, W { Data }) )
+                   , variables: Z { Loc }, W { Data }
+                   )
+           )
+assertEqual(
+           , #match( term:      sep()
+                   , pattern:   sep( pto( Z { Loc }, W { Data }) )
+                   , variables: Z { Loc }, W { Data }
+                   )
+           )

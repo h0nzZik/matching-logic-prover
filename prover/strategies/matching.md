@@ -44,6 +44,10 @@ module STRATEGY-MATCHING
 
   syntax MatchResults ::= #getMatchResults(Pattern, Pattern, Maps) [function]
   rule #getMatchResults(T, P, .Maps) => .MatchResults
+  rule #getMatchResults(S(ARGs), S(P_ARGs), SUBST; SUBSTs)
+    => #matchResult(subst: SUBST, rest: .Patterns)
+     , #getMatchResults(sep(ARGs), sep(P_ARGs), SUBSTs)
+    requires S =/=K sep
   rule #getMatchResults(sep(ARGs), sep(P_ARGs), SUBST; SUBSTs)
     => #matchResult(subst: SUBST, rest: ARGs -Patterns substPatternsMap(P_ARGs, SUBST))
      , #getMatchResults(sep(ARGs), sep(P_ARGs), SUBSTs)
@@ -69,7 +73,15 @@ module STRATEGY-MATCHING
     => (SUBST removeIdentityMappings(zip(P_ARGs, ARGs))); .Maps
     requires S =/=K sep
     andBool checkSubstitution(removeIdentityMappings(zip(P_ARGs, ARGs)), Vs)
-    
+
+  rule #matchAux( terms:     .Patterns
+                , pattern:   _
+                , variables: _
+                , results:   .Maps
+                , subst:     _
+                )
+    => .Maps
+
   rule #matchAux( terms:     S:Symbol(ARGs), .Patterns
                 , pattern:   S:Symbol(P_ARGs)
                 , variables: Vs
