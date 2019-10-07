@@ -38,15 +38,15 @@ module STRATEGY-MATCHING
      , .MatchResults
     requires getFreeVariables(Ts) intersect Vs =/=K .Patterns 
 
-  rule #match( terms:     S:Symbol(ARGs) #as Ts
+  rule #match( terms:     (S:Symbol(ARGs), .Patterns) #as Ts
              , patterns:  S:Symbol(P_ARGs)
              , variables: Vs
              )
     => #matchResult( subst: removeIdentityMappings(zip(P_ARGs, ARGs)), rest: .Patterns )
      , .MatchResults
     requires S =/=K sep
-//    andBool notBool( getFreeVariables(Ts) intersect Vs =/=K .Patterns )
-//     andBool checkSubstitution(removeIdentityMappings(zip(P_ARGs, ARGs)), Vs)
+    andBool notBool( getFreeVariables(Ts) intersect Vs =/=K .Patterns )
+    andBool checkSubstitution(removeIdentityMappings(zip(P_ARGs, ARGs)), Vs)
 
   syntax Bool ::= checkSubstitution(Map, Patterns) [function] 
   rule checkSubstitution( .Map , Vs ) => true
@@ -123,13 +123,14 @@ module TEST-MATCHING-SYNTAX
     imports PROVER-SYNTAX
     
     syntax KItem ::= Pattern // TODO: Explain why we're doing this
+    syntax VariableName ::= "W" [token] | "X" [token] | "Y" [token] | "Z" [token]
+    syntax Sort         ::= "Data" [token] | "Loc" [token]
 endmodule
 
 module TEST-MATCHING
   imports STRATEGY-MATCHING
   imports PROVER-DRIVER
-    
-  syntax VariableName ::= "W" | "X" | "Y" | "Z"
+
   syntax Sort         ::= "Data" | "Loc"
   syntax Declaration ::= assertEqual(MatchResults, MatchResults)
   rule assertEqual(EXPECTED, EXPECTED) => .K
