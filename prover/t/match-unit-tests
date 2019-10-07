@@ -1,0 +1,24 @@
+assertEqual( , )
+assertEqual( #matchResult( subst: Z { Loc }  |-> X { Loc }
+                                  W { Data } |-> Y { Data }
+                         , rest: 
+                         )
+           , #match( terms:     pto( X { Loc }, Y { Data }) 
+                   , patterns:  pto( Z { Loc }, W { Data })
+                   , variables: Z { Loc }, W { Data }
+                   )
+           )
+assertEqual( #matchFailure("AlphaRenaming not done")
+           , #match( terms:     pto( Z { Loc }, Y { Data }) 
+                   , patterns:  pto( Z { Loc }, W { Data })
+                   , variables: Z { Loc }, W { Data }
+                   )
+           )
+
+
+assertEqual(
+           , #match( terms:     pto( X { Loc }, Y { Data }) 
+                   , patterns:  pto( Z { Loc }, W { Data })
+                   , variables: W { Data }
+                   )
+           )
