@@ -34,8 +34,9 @@ module STRATEGY-MATCHING
 
                                          /* Subst, Rest */
   syntax MatchResult ::= "#matchResult" "(" "subst:" Map "," "rest:" Patterns ")" [format(%1%2%i%n%3%i%n%4%d%n%5%i%6%n%7%d%d%8)]
-  syntax MatchResult ::= "#matchResult" "(" "subst:" Map ")"
-  syntax MatchResult ::= "#matchFailure" "(" String ")"
+                       | MatchFailure
+                       | "#matchResult" "(" "subst:" Map ")"
+  syntax MatchFailure ::= "#matchFailure" "(" String ")"
   syntax MatchResults ::= List{MatchResult, ";"} [klabel(MatchResults), format(%1%n%2 %3)]
 
   syntax MatchResults ::= "#match" "(" "term:"      Pattern
@@ -49,14 +50,12 @@ module STRATEGY-MATCHING
                                       "," "subst:"     Map
                                       ")" [function]
 
-  syntax MatchResult ::= "#matchStuck" "(" K ")"
-
   syntax MatchResults ::= MatchResults "++MatchResults" MatchResults [function, right]
   rule (MR1; MR1s) ++MatchResults MR2s => MR1; (MR1s ++MatchResults MR2s)
   rule .MatchResults ++MatchResults MR2s => MR2s
 
   syntax MatchResults ::= #getMatchResults(Pattern, Pattern, MatchResults) [function]
-  rule #getMatchResults(T, P, (#matchFailure(_) #as MF); MRs)
+  rule #getMatchResults(T, P, MF:MatchFailure; MRs)
     => MF
      ; #getMatchResults(T, P, MRs)
   rule #getMatchResults(T, P, (#matchResult(subst: _, rest: _) #as MR); MRs)
@@ -78,32 +77,112 @@ module STRATEGY-MATCHING
   rule #match( term: T, pattern: _, variables: Vs )
     => #matchFailure( "AlphaRenaming not done" ); .MatchResults
     requires getFreeVariables(T) intersect Vs =/=K .Patterns
+```
 
+Work around OCaml not producing reasonable error messages:
+
+```k
+  syntax MatchFailure ::= "#matchStuck" "(" K ")"
+  syntax KItem ::= "\\n" [format(%n)] 
   rule #matchAux( terms: Ts , pattern: P, variables: Vs, results: MRs, subst: SUBST )
-    => #matchStuck( "terms:" ~> Ts ~> "pattern:" ~> P ~> "vars:" ~> Vs ~> "results:" ~> MRs ~> "subst:" ~> SUBST )
+    => #matchStuck( "AUX" ~> \n ~> "terms:" ~> Ts
+                          ~> \n ~> "pattern:" ~> P
+                          ~> \n ~> "vars:" ~> Vs
+                          ~> \n ~> "results:" ~> MRs
+                          ~> \n ~> "subst:" ~> SUBST
+                  )
      ; .MatchResults
     [owise]
-    
-  rule #matchAux( terms:     S:Symbol(ARGs), .Patterns
-                , pattern:   S:Symbol(P_ARGs)
+  rule #getMatchResults(T, P, MRs)
+    => #matchStuck( "GET RESULTS" ~> "term:" ~> T ~> "pattern:" ~> P ~> "MRs:" ~> MRs )
+     ; .MatchResults
+    [owise]
+```
+
+Recurse over assoc-only constructors (including `pto`):
+
+```k
+  // Non-matching constructors
+  rule #matchAux( terms:     S1:Symbol(_) , .Patterns
+                , pattern:   S2:Symbol(_)
                 , variables: Vs
                 , results:   .MatchResults
                 , subst:     SUBST
-             )
-    => #matchResult(subst: SUBST removeIdentityMappings(zip(P_ARGs, ARGs))); .MatchResults
-    requires S =/=K sep
-    andBool checkSubstitution(removeIdentityMappings(zip(P_ARGs, ARGs)), Vs)
+                )
+    => #matchFailure("Constructors do not match"); .MatchResults     
+    requires S1 =/=K S2
+     andBool S1 =/=K sep
 
-  rule #matchAux( terms:     S:Symbol(ARGs), .Patterns
-                , pattern:   S:Symbol(P_ARGs)
+  // Empty application
+  rule #matchAux( terms:     S:Symbol(.Patterns) , .Patterns
+                , pattern:   S:Symbol(.Patterns)
+                , variables: Vs
+                , results:   .MatchResults
+                , subst:     SUBST
+                )
+    => #matchResult(subst: SUBST); .MatchResults
+    requires S =/=K sep
+    
+  // Application, can susbstitute
+  rule #matchAux( terms:     S:Symbol(ARG, ARGs), .Patterns
+                          => S(ARGs), .Patterns
+                , pattern:   S:Symbol(P_ARG:Variable, P_ARGs)
+                          => S(P_ARGs)
+                , variables: Vs
+                , results:   .MatchResults
+                , subst:     SUBST => (P_ARG |-> ARG) SUBST
+                )
+    requires S =/=K sep
+     andBool P_ARG in Vs
+     
+  // Application, ground: don't need substitution
+  rule #matchAux( terms:     S:Symbol(ARG, ARGs) , .Patterns
+                          => S:Symbol(ARGs:Patterns) , .Patterns
+                , pattern:   S:Symbol(ARG:Variable, P_ARGs:Patterns)
+                          => S:Symbol(P_ARGs)
+                , variables: Vs
+                , results:   .MatchResults
+                , subst:     _
+                )
+    requires S =/=K sep
+     andBool notBool ARG in Vs
+
+  // Application, ground: cannot substitute variable
+  rule #matchAux( terms:     S:Symbol(ARG, _:Patterns) , .Patterns
+                , pattern:   S:Symbol(P_ARG:Variable, _:Patterns)
                 , variables: Vs
                 , results:   .MatchResults
                 , subst:     _
                 )
     => #matchFailure( "No valid substitution" ); .MatchResults
     requires S =/=K sep
-    andBool notBool(checkSubstitution(removeIdentityMappings(zip(P_ARGs, ARGs)), Vs))
+     andBool ARG =/=K P_ARG
+     andBool notBool P_ARG in Vs
 
+  // Application, nested: recurse
+  rule #matchAux( terms:   ( S:Symbol((S1:Symbol(_) #as ARG), ARGs) , .Patterns
+                          => S:Symbol(ARGs) , .Patterns
+                           )
+                , pattern: ( S:Symbol((S1:Symbol(_) #as P_ARG), P_ARGs)
+                          => S:Symbol(P_ARGs)
+                           )
+                , variables: Vs
+                , results:   .MatchResults 
+                          => #matchAux( terms:   ARG, .Patterns
+                                      , pattern: P_ARG
+                                      , variables: Vs
+                                      , results: .MatchResults
+                                      , subst: SUBST
+                                      )
+                , subst:     SUBST
+                )
+    requires S =/=K sep
+```
+
+Recurse over assoc-comm `sep`:
+
+```k
+  // Base case: emp matches all heaps
   rule #matchAux( terms:     sep(ARGs), .Patterns
                 , pattern:   sep(.Patterns)
                 , variables: Vs
@@ -112,6 +191,7 @@ module STRATEGY-MATCHING
                 )
     => #matchResult(subst: SUBST); .MatchResults
 
+  // Base case: If pattern is larger than term, there can be no match 
   rule #matchAux( terms:     sep(.Patterns), .Patterns
                 , pattern:   sep(P, Ps)
                 , variables: Vs
@@ -120,6 +200,7 @@ module STRATEGY-MATCHING
                 )
     => #matchFailure( "Pattern larger than term" ); .MatchResults
 
+  // Recursive case: AC match on arguments
   rule #matchAux( terms:     sep(ARGs), .Patterns
                 , pattern:   sep(P_ARG, P_ARGs)
                 , variables: Vs
@@ -138,7 +219,35 @@ module STRATEGY-MATCHING
                 , subst:     SUBST
                 )
     requires ARGs =/=K .Patterns
+```
 
+Distribute results for nested matching over current call:
+
+```k
+  // Base case: Apply substitution from nested term
+  // TODO: don't want to call substUnsafe directly (obviously)
+  rule #matchAux( terms:     Ts
+                , pattern:   P
+                , variables: Vs
+                , results:   #matchResult(subst: SUBST1); .MatchResults
+                , subst:     SUBST2
+                )
+    => #matchAux( terms:     Ts
+                , pattern:   substUnsafe(P, SUBST1)
+                , variables: Vs -Patterns fst(unzip(SUBST1))
+                , results:   .MatchResults
+                , subst:     SUBST1 SUBST2
+                )
+
+  rule #matchAux( terms:     Ts
+                , pattern:   P
+                , variables: Vs
+                , results:   (#matchFailure(_) #as MF); .MatchResults
+                , subst:     SUBST2
+                )
+    => MF; .MatchResults
+
+  // Recursive case
   rule #matchAux( terms:     Ts
                 , pattern:   P
                 , variables: Vs
@@ -158,29 +267,11 @@ module STRATEGY-MATCHING
                 , subst:     SUBST
                 )
     requires MRs =/=K .MatchResults
+```
 
-  rule #matchAux( terms:     Ts
-                , pattern:   P
-                , variables: Vs
-                , results:   (#matchFailure(_) #as MF); .MatchResults
-                , subst:     SUBST2
-                )
-    => MF; .MatchResults
+Recurse over terms. This implements commutative matching:
 
-  // TODO: don't want to call substUnsafe directly (obviously)
-  rule #matchAux( terms:     Ts
-                , pattern:   P
-                , variables: Vs
-                , results:   #matchResult(subst: SUBST1); .MatchResults
-                , subst:     SUBST2
-                )
-    => #matchAux( terms:     Ts
-                , pattern:   substUnsafe(P, SUBST1)
-                , variables: Vs -Patterns fst(unzip(SUBST1))
-                , results:   .MatchResults
-                , subst:     SUBST1 SUBST2
-                )
-
+```k
   rule #matchAux( terms:     T, Ts
                 , pattern:   P
                 , variables: Vs
@@ -200,16 +291,10 @@ module STRATEGY-MATCHING
                 , subst:     SUBST
                 )
     requires Ts =/=K .Patterns
-
-  syntax Bool ::= checkSubstitution(Map, Patterns) [function] 
-  rule checkSubstitution( .Map , Vs ) => true
-  rule checkSubstitution( V |-> _ REST:Map , Vs ) => false
-    requires notBool V in Vs
-  rule checkSubstitution( V |-> _ REST:Map , Vs ) => checkSubstitution( REST, Vs )
-    requires V in Vs
 endmodule
 
 module TEST-MATCHING-SYNTAX
+    imports BASIC-K
     imports TOKENS-SYNTAX
     imports TEST-MATCHING
     imports PROVER-SYNTAX
