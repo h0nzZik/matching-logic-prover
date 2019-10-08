@@ -5,21 +5,37 @@ module STRATEGY-MATCHING
   imports PROVER-CONFIGURATION
   imports KORE-HELPERS
   imports MAP
-  
+
   rule <claim> \implies(\and(LSPATIAL, LHS) , \exists { Vs } \and(RSPATIAL, RHS)) </claim>
        <strategy> match => #match( term: LSPATIAL
                                  , pattern: RSPATIAL
                                  , variables: Vs
                                  )
+                        ~> match
                   ...
        </strategy>
     requires isSpatialPattern(LSPATIAL)
      andBool isSpatialPattern(RSPATIAL)
 
+  rule <claim> \implies( \and( LSPATIAL, LHS)
+                       ,  \exists { Vs } \and( RHS )
+                       => \exists { Vs -Patterns fst(unzip(SUBST)) } substMap(\and(RHS), SUBST)
+                       )
+       </claim>
+       <strategy> ( #matchResult( subst: SUBST
+                                , rest:  .Patterns
+                                )
+                  , .MatchResults
+                 ~> match
+                  )
+               => noop
+                  ...
+       </strategy>
+
                                          /* Subst, Rest */
-  syntax MatchResult ::= "#matchResult" "(" "subst:" Map "," "rest:" Patterns ")"
+  syntax MatchResult ::= "#matchResult" "(" "subst:" Map "," "rest:" Patterns ")" [format(%1%2%i%n%3%i%n%4%d%n%5%i%6%n%7%d%d%8)]
   syntax MatchResult ::= "#matchFailure" "(" String ")"
-  syntax MatchResults ::= List{MatchResult, ","} [klabel(MatchResults)]
+  syntax MatchResults ::= List{MatchResult, ","} [klabel(MatchResults), format(%1%n%2 %3)]
 
   syntax MatchResults ::= "#match" "(" "term:"      Pattern
                                    "," "pattern:"   Pattern
@@ -111,7 +127,7 @@ module STRATEGY-MATCHING
                                       , pattern:   P_ARG
                                       , variables: Vs
                                       , results:  .Maps
-                                      , subst:    .Map
+                                      , subst:    SUBST
                                       )
                 , subst:     SUBST
                 )
@@ -151,17 +167,25 @@ module STRATEGY-MATCHING
                 , subst:     SUBST1 SUBST2
                 )
 
-  // rule #matchAux( terms:     (sep(ARGs), .Patterns) #as Ts
-  //               , patterns:  sep(P_ARG, P_ARGs)
-  //               , variables: Vs
-  //               )
-  //   => #matchAux( terms:     ARGs
-  //               , patterns:  P_ARG, .Patterns
-  //               , variables: Vs
-  //               , subst:     .Map
-  //               )
-  //    , .MatchResults
-  //   requires notBool(getFreeVariables(Ts) intersect Vs =/=K .Patterns)
+  rule #matchAux( terms:     T, Ts
+                , pattern:  P
+                , variables: Vs
+                , results:   RESULTS
+                , subst:     SUBST
+                )
+    => #matchAux( terms:     T
+                , pattern:   P
+                , variables: Vs
+                , results:   RESULTS
+                , subst:     SUBST
+                ) ++Maps
+       #matchAux( terms:     Ts
+                , pattern:   P
+                , variables: Vs
+                , results:   RESULTS
+                , subst:     SUBST
+                )
+    requires Ts =/=K .Patterns
 
   syntax Bool ::= checkSubstitution(Map, Patterns) [function] 
   rule checkSubstitution( .Map , Vs ) => true
@@ -169,74 +193,13 @@ module STRATEGY-MATCHING
     requires notBool V in Vs
   rule checkSubstitution( V |-> _ REST:Map , Vs ) => checkSubstitution( REST, Vs )
     requires V in Vs
-    
-
-
-
-//#matchAux( term:    S(ARGs)
-//        pattern: S(P_ARGs)
-//        vars: VARS
-//      )
-//=> #checksomthing(zip(P_ARGs, ARGs))
-//    requires S =/=K sep
-//
-//#matchAux( term:    S1(_)
-//        pattern: S2(_)
-//        vars: VARS
-//      )
-//=> .MatchResults
-//   requires S1 =/=K sep
-//    andBool S2 =/=K sep
-//    andBool S1 =/=K S2
-//    
-// #matchAux( term:   sep(ARGs)
-//         pattern: sep(P_ARG, P_ARGs)
-//         vars: VARS
-//      )
-//=> #matchAux( term:   sep(ARGs)
-//           pattern: sep(P_ARGs)
-//           vars: VARS
-//           rest: 
-//           num_rotations: length(P_ARGs) 
-//           recursive_results: 
-//         )
-
-//  rule #matchAux( term:    TERM
-//             , pattern: sep(P, Ps)
-//             , vars:    VARs
-//             , rest:    REST
-//             , results: .MatchResults
-//                     => #matchAux( term:    term
-//                              , pattern: sep(p)
-//                              , vars:    vars
-//                              , rest:    .pattern
-//                              , results: .matchresults
-//                              )
-//             )
-//    requires notBool Ps ==K .Patterns
-//    
-//  rule #matchAux( term:    TERM
-//             , pattern: PATTERN  
-//             , vars:    VARs
-//             , rest:    REST
-//             , results: M, Ms
-//             )    
-//  rule #matchAux( term:    sep(TERMs)
-//             , pattern: sep(P:Pattern)  
-//             , vars:    VARs
-//             , results: .MatchResults
-//             )
-//    => #matchesTermIn( terms: TERMS
-//                       pattern: P
-//                     )
-
 endmodule
 
 module TEST-MATCHING-SYNTAX
     imports TOKENS-SYNTAX
     imports TEST-MATCHING
     imports PROVER-SYNTAX
-    
+
     syntax KItem ::= Pattern // TODO: Explain why we're doing this
     syntax VariableName ::= "W" [token] | "X" [token] | "Y" [token] | "Z" [token]
                           | "W1" [token]
@@ -255,7 +218,7 @@ module TEST-MATCHING
   imports PROVER-DRIVER
 
   syntax Sort         ::= "Data" | "Loc"
-  syntax Declaration ::= "assert" "(" MatchResults "==" MatchResults ")"
+  syntax Declaration ::= "assert" "(" MatchResults "==" MatchResults ")" [format(%1%2%i%i%n%3%d%n%4%i%n%5%d%d%6%n)]
   rule assert(EXPECTED == EXPECTED) => .K
 endmodule
 ```

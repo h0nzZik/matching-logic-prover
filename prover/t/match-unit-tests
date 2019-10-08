@@ -54,6 +54,12 @@ assert( #matchResult( subst: .Map
       )
 assert( #matchResult( subst: Z1 { Loc }  |-> X1 { Loc }
                              W1 { Data } |-> Y1 { Data }
+                             Z2 { Loc }  |-> X1 { Loc }
+                             W2 { Data } |-> Y1 { Data }
+                    , rest: pto ( X2 { Loc } , Y2 { Data } )
+                    )
+      , #matchResult( subst: Z1 { Loc }  |-> X1 { Loc }
+                             W1 { Data } |-> Y1 { Data }
                              Z2 { Loc }  |-> X2 { Loc }
                              W2 { Data } |-> Y2 { Data }
                     , rest: 
@@ -63,6 +69,12 @@ assert( #matchResult( subst: Z1 { Loc }  |-> X1 { Loc }
                              Z2 { Loc }  |-> X1 { Loc }
                              W2 { Data } |-> Y1 { Data }
                     , rest: 
+                    )
+      , #matchResult( subst: Z1 { Loc }  |-> X2 { Loc }
+                             W1 { Data } |-> Y2 { Data }
+                             Z2 { Loc }  |-> X2 { Loc }
+                             W2 { Data } |-> Y2 { Data }
+                    , rest: pto ( X1 { Loc } , Y1 { Data } )
                     )
      == #match( term:      sep( pto( X1 { Loc }, Y1 { Data })
                               , pto( X2 { Loc }, Y2 { Data })
