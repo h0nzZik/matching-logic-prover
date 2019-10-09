@@ -3,54 +3,54 @@ assert( #matchResult( subst: Z { Loc }  |-> X { Loc }
                              W { Data } |-> Y { Data }
                     , rest: 
                     )
-     == #match( term:      pto( X { Loc }, Y { Data }) 
-              , pattern:   pto( Z { Loc }, W { Data })
-              , variables: Z { Loc }, W { Data }
-              )
+     == #matchShowFailures( term:      pto( X { Loc }, Y { Data }) 
+                          , pattern:   pto( Z { Loc }, W { Data })
+                          , variables: Z { Loc }, W { Data }
+                          )
       )
 assert( #matchFailure("AlphaRenaming not done")
-     == #match( term:      pto( Z { Loc }, Y { Data }) 
-              , pattern:   pto( Z { Loc }, W { Data })
-              , variables: Z { Loc }, W { Data }
-              )
+     == #matchShowFailures( term:      pto( Z { Loc }, Y { Data }) 
+                          , pattern:   pto( Z { Loc }, W { Data })
+                          , variables: Z { Loc }, W { Data }
+                          )
       )
 
 assert( #matchFailure("No valid substitution")
-     == #match( term:      pto( X { Loc }, Y { Data }) 
-              , pattern:   pto( Z { Loc }, W { Data })
-              , variables: W { Data }
-              )
+     == #matchShowFailures( term:      pto( X { Loc }, Y { Data }) 
+                          , pattern:   pto( Z { Loc }, W { Data })
+                          , variables: W { Data }
+                          )
       )
 assert( #matchResult( subst: .Map
                     , rest:  pto( X { Loc }, Y { Data })
                     )
-     == #match( term:      sep( pto( X { Loc }, Y { Data }) )
-              , pattern:   sep()
-              , variables:
-              )
+     == #matchShowFailures( term:      sep( pto( X { Loc }, Y { Data }) )
+                          , pattern:   sep()
+                          , variables:
+                          )
       )
 assert( #matchResult( subst: Z { Loc }  |-> X { Loc }
                              W { Data } |-> Y { Data }
                     , rest: 
                     )
-     == #match( term:      sep( pto( X { Loc }, Y { Data }) )
-              , pattern:   sep( pto( Z { Loc }, W { Data }) )
-              , variables: Z { Loc }, W { Data }
-              )
+     == #matchShowFailures( term:      sep( pto( X { Loc }, Y { Data }) )
+                          , pattern:   sep( pto( Z { Loc }, W { Data }) )
+                          , variables: Z { Loc }, W { Data }
+                          )
       )
 assert( #matchFailure("Pattern larger than term")
-     == #match( term:      sep()
-              , pattern:   sep( pto( Z { Loc }, W { Data }) )
-              , variables: Z { Loc }, W { Data }
-              )
+     == #matchShowFailures( term:      sep()
+                          , pattern:   sep( pto( Z { Loc }, W { Data }) )
+                          , variables: Z { Loc }, W { Data }
+                          )
       )
 assert( #matchResult( subst: .Map
                     , rest:
                     )
-     == #match( term:      sep()
-              , pattern:   sep()
-              , variables:
-              )
+     == #matchShowFailures( term:      sep()
+                          , pattern:   sep()
+                          , variables:
+                          )
       )
 assert( #matchResult( subst: Z1 { Loc }  |-> X1 { Loc }
                              W1 { Data } |-> Y1 { Data }
@@ -76,36 +76,36 @@ assert( #matchResult( subst: Z1 { Loc }  |-> X1 { Loc }
                              W2 { Data } |-> Y2 { Data }
                     , rest: pto ( X1 { Loc } , Y1 { Data } )
                     )
-     == #match( term:      sep( pto( X1 { Loc }, Y1 { Data })
-                              , pto( X2 { Loc }, Y2 { Data })
-                              )
-              , pattern:   sep( pto( Z1 { Loc }, W1 { Data })
-                              , pto( Z2 { Loc }, W2 { Data })
-                              )
-              , variables: Z1 { Loc }, W1 { Data }, Z2 { Loc }, W2 { Data }
-              )
+     == #matchShowFailures( term:      sep( pto( X1 { Loc }, Y1 { Data })
+                                          , pto( X2 { Loc }, Y2 { Data })
+                                          )
+                          , pattern:   sep( pto( Z1 { Loc }, W1 { Data })
+                                          , pto( Z2 { Loc }, W2 { Data })
+                                          )
+                          , variables: Z1 { Loc }, W1 { Data }, Z2 { Loc }, W2 { Data }
+                          )
       )
 assert( #matchFailure ( "No valid substitution" )
       ; #matchFailure ( "No valid substitution" )
       ; #matchFailure ( "No valid substitution" )
       ; #matchFailure ( "No valid substitution" )
-     == #match( term:      sep( pto( X1 { Loc }, Y1 { Loc })
-                              , pto( X2 { Loc }, Y2 { Loc })
-                              )
-              , pattern:   sep( pto( X { Loc }, Y { Loc })
-                              , pto( Y { Loc }, Z { Loc })
-                              )
-              , variables: X { Loc }, Y { Loc }, Z { Loc }
-              )
+     == #matchShowFailures( term:      sep( pto( X1 { Loc }, Y1 { Loc })
+                                          , pto( X2 { Loc }, Y2 { Loc })
+                                          )
+                          , pattern:   sep( pto( X { Loc }, Y { Loc })
+                                          , pto( Y { Loc }, Z { Loc })
+                                          )
+                          , variables: X { Loc }, Y { Loc }, Z { Loc }
+                          )
       )
 
 assert(
-     == #match( term:      sep ( pto ( Vy { RefGTyp } , c_GTyp ( Vz { RefGTyp }) )
-                               , pto ( Vx { RefGTyp } , c_GTyp ( Vy { RefGTyp }) )
-                               )
-              , pattern:   sep ( pto ( Vx { RefGTyp } , c_GTyp ( F8 { RefGTyp }) )
-                               , pto ( F8 { RefGTyp } , c_GTyp ( Vz { RefGTyp }) )
-                               )
-              , variables: F8 { RefGTyp }
-              )
+     == #matchShowFailures( term:      sep ( pto ( Vy { RefGTyp } , c_GTyp ( Vz { RefGTyp }) )
+                                           , pto ( Vx { RefGTyp } , c_GTyp ( Vy { RefGTyp }) )
+                                           )
+                          , pattern:   sep ( pto ( Vx { RefGTyp } , c_GTyp ( F8 { RefGTyp }) )
+                                           , pto ( F8 { RefGTyp } , c_GTyp ( Vz { RefGTyp }) )
+                                           )
+                          , variables: F8 { RefGTyp }
+                          )
       )

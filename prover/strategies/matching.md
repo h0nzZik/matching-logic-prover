@@ -43,6 +43,10 @@ module STRATEGY-MATCHING
                                    "," "pattern:"   Pattern
                                    "," "variables:" Patterns
                                    ")" [function]
+  syntax MatchResults ::= "#matchShowFailures" "(" "term:"      Pattern
+                                               "," "pattern:"   Pattern
+                                               "," "variables:" Patterns
+                                               ")" [function]
   syntax MatchResults ::= "#matchAux" "(" "terms:"     Patterns
                                       "," "pattern:"   Pattern
                                       "," "variables:" Patterns
@@ -70,13 +74,22 @@ module STRATEGY-MATCHING
     => #matchResult(subst: SUBST, rest: ARGs -Patterns substPatternsMap(P_ARGs, SUBST))
      ; #getMatchResults(sep(ARGs), sep(P_ARGs), MRs)
 
-  rule #match( term: T , pattern: P, variables: Vs )
+  rule #matchShowFailures( term: T , pattern: P, variables: Vs )
     => #getMatchResults( T, P, #matchAux( terms: T , pattern: P, variables: Vs, results: .MatchResults, subst: .Map ) )
     requires getFreeVariables(T) intersect Vs ==K .Patterns
-
-  rule #match( term: T, pattern: _, variables: Vs )
+  rule #matchShowFailures( term: T, pattern: _, variables: Vs )
     => #matchFailure( "AlphaRenaming not done" ); .MatchResults
     requires getFreeVariables(T) intersect Vs =/=K .Patterns
+    
+    
+  rule #match( term: T, pattern: P, variables: Vs )
+    => #filterMatchFailures(#matchShowFailures( term: T, pattern: P, variables: Vs ))
+    
+  syntax MatchResults ::= #filterMatchFailures(MatchResults) [function]
+  rule #filterMatchFailures(MF:MatchFailure ; MRs) => #filterMatchFailures(MRs)
+  rule #filterMatchFailures(MF              ; MRs) => MF ; #filterMatchFailures(MRs)
+    requires notBool isMatchFailure(MF)
+  rule #filterMatchFailures(.MatchResults) => .MatchResults
 ```
 
 Work around OCaml not producing reasonable error messages:
