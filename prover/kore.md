@@ -47,26 +47,26 @@ is to be used for generating fresh variables. *The second variety must be used
 only in this scenario*.
 
 ```k
-  syntax Variable ::= VariableName "{" Sort "}" [klabel(sortedVariable)]
+  syntax Variable ::= VariableName "{" Sort "}" [klabel(sortedVariable), format(%1:%3)]
   syntax Pattern ::= Int
                    | Variable
                    | Symbol
-                   | Symbol "(" Patterns ")"                    [klabel(apply)]
+                   | Symbol "(" Patterns ")"                    [klabel(apply),   format(%1%2%n%i%i%3%d%d%4%n)]
 
                    | "\\top"    "(" ")"                         [klabel(top)]
                    | "\\bottom" "(" ")"                         [klabel(bottom)]
-                   | "\\equals" "(" Pattern "," Pattern ")"     [klabel(equals)]
-                   | "\\not"    "(" Pattern ")"                 [klabel(not)]
+                   | "\\equals" "(" Pattern "," Pattern ")"     [klabel(equals), format(%1 %2%i%i%i%i%i%3%d%4%i %5%6%d%d%d%d%d%n)]
+                   | "\\not"    "(" Pattern ")"                 [klabel(not), format(%1%2 %i%i%i%3%d%4%d%d%n)]
 
-                   | "\\and"    "(" Patterns ")"                [klabel(and)]
-                   | "\\or"     "(" Patterns ")"                [klabel(or)]
-                   | "\\implies" "(" Pattern "," Pattern ")"    [klabel(implies)]
+                   | "\\and"    "(" Patterns ")"                [klabel(and),   format(∧ %2 %i%i%3%d%d%4%n)]
+                   | "\\or"     "(" Patterns ")"                [klabel(or),    format(∨ %2 %i%i%3%d%d%4%n)]
+                   | "\\implies" "(" Pattern "," Pattern ")"    [klabel(implies), format(%1%2%i%i%i%i%i %3%d%4 %i%5%d%d%d%d%d)]
 
-                   | "\\exists" "{" Patterns "}" Pattern        [klabel(exists)]
-                   | "\\forall" "{" Patterns "}" Pattern        [klabel(forall)]
+                   | "\\exists" "{" Patterns "}" Pattern        [klabel(exists), format(∀ %2%i%i %3 %d%d%4%n%5%n)]
+                   | "\\forall" "{" Patterns "}" Pattern        [klabel(forall), format(∃ %2%i%i %3 %d%d%4%n%5%n)]
 
                      /* Sugar for \iff, \mu and application */
-                   | "\\iff-lfp" "(" Pattern "," Pattern ")"    [klabel(ifflfp)]
+                   | "\\iff-lfp" "(" Pattern "," Pattern ")"    [klabel(ifflfp), format(%1%i%i%i%i%i%2 %3%d%4%i %5%n%6%d%d%d%d%d)]
                    
                    // sugar for commonly needed axioms
                    | "functional" "(" Symbol ")"
@@ -104,14 +104,14 @@ only in this scenario*.
   syntax Symbol ::= "store"         [token]
                   | "select"        [token]
 
-  syntax Patterns ::= List{Pattern, ","}                        [klabel(Patterns)]
+  syntax Patterns ::= List{Pattern, ","}                        [klabel(Patterns), format(%1%d%2 %i%3)]
   syntax Sorts ::= List{Sort, ","}                              [klabel(Sorts)]
 
   syntax SymbolDeclaration ::= "symbol" Symbol "(" Sorts ")" ":" Sort
   syntax SortDeclaration ::= "sort" Sort
 
   syntax Declaration ::= "imports" String
-                       | "axiom" Pattern
+                       | "axiom" Pattern [format(%1%i%i%i %2%d%d%d)]
                        | SymbolDeclaration
                        | SortDeclaration
 
