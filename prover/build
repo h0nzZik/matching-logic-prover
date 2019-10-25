@@ -62,7 +62,7 @@ list_passing = []
 for test in glob('t/SL-COMP18/bench/qf_shid_entl/*.smt2'):
     list_passing += [
         proj.source(test) \
-            .then(prover_smt.krun()) \
+            .then(prover_smt.krun().variable('env', 'gtimeout 10m')) \
             .then(log_to_file.variable('log_file', 't/passing/qf_shid_entl') \
                              .variable('message',  test) \
                              .output('t/passing/qf_shid_entl.' + test.replace('/', '.'))
