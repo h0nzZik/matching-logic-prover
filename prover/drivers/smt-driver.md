@@ -169,17 +169,17 @@ Mutual Recursion
 
   syntax KItem ::= "mutual-recursion-declare-constructors" "(" Sort "," SMTLIB2FunctionDecList ")"
   rule <k> _:GoalBuilder
-        ~> ( mutual-recursion-declare-constructors( TUPLE_SORT, ( S1 (VARLIST) RETSORT ) DECLs)
-          => mutual-recursion-declare-constructors( TUPLE_SORT,                          DECLs)
+        ~> ( mutual-recursion-declare-constructors( TUPLE_SORT, (ID (ARGs) RET ) DECLs)
+          => mutual-recursion-declare-constructors( TUPLE_SORT,                  DECLs)
            )
            ...
        </k>
        <declarations> ( .Bag
-                     => <declaration> symbol StringToSymbol(SMTLIB2SimpleSymbolToString(S1) +String "_c")
-                                             ( SMTLIB2SortedVarListToSorts(VARLIST) )
+                     => <declaration> symbol StringToSymbol(SMTLIB2SimpleSymbolToString(ID) +String "_c")
+                                             ( SMTLIB2SortedVarListToSorts(ARGs) )
                                            : TUPLE_SORT
                         </declaration>
-                        <declaration> axiom functional(StringToSymbol(SMTLIB2SimpleSymbolToString(S1) +String "_c"))
+                        <declaration> axiom functional(StringToSymbol(SMTLIB2SimpleSymbolToString(ID) +String "_c"))
                         </declaration>
                       )
                       ...
@@ -191,10 +191,10 @@ Mutual Recursion
            ...
        </k>
 
-  syntax KItem ::= "mutual-recursion-define-fixpoint"      "(" SMTLIB2FunctionDecList "," SMTLIB2TermList ")"
+  syntax KItem ::= "mutual-recursion-define-fixpoint" "(" SMTLIB2FunctionDecList "," SMTLIB2TermList ")"
   rule <k> _:GoalBuilder
-        ~> ( mutual-recursion-define-fixpoint( ((SYMBOL (VARLIST) RETSORT) DECLs_REST) #as DECLs
-                                             , ((BODY BODIES_REST)                     #as BODIES)
+        ~> ( mutual-recursion-define-fixpoint( ((ID (ARGs) RET) DECLs_REST) #as DECLs
+                                             , ((BODY BODIES_REST)          #as BODIES)
                                              )
           => .K
            )
@@ -206,75 +206,97 @@ Mutual Recursion
                         </declaration>
                         <declaration> axiom functional(#symbolNameFromFunctionDecList(DECLs)) </declaration>
                         <declaration> axiom \forall { SMTLIB2SortedVarListToPatterns(ARGs) }
-                                         \iff-lfp( SMTLIB2SimpleSymbolToSymbol(ID)(SMTLIB2SortedVarListToPatterns(ARGs))
-                                                 , #normalizeDefinition(\or(#mutRecTermsToPatterns(recSymbols: #funDecListToTermList(DECLs), decls: DECLs, bodies: BODIES))
-
-                                                 SMTLIB2TermToPattern(BODY, ))
+                                         \iff-lfp( #symbolNameFromFunctionDecList(DECLs)(SMTLIB2SortedVarListToPatterns(ARGs))
+                                                 , \or(#mutRecTermsToPatterns(recSymbols: #funDecListToTermList(DECLs), decls: DECLs, bodies: BODIES))
                                                  )
                         </declaration>
                       ) ...
        </declarations>
 
-    syntax KItem ::= "mutual-recursion-define-wrappers"      "(" SMTLIB2FunctionDecList ")"
+  syntax KItem ::= "mutual-recursion-define-wrappers" "(" SMTLIB2FunctionDecList ")"
+  // rule <k> _:GoalBuilder
+  //       ~> ( mutual-recursion-define-wrappers( ((ID (ARGs) RET) DECLs_REST) #as DECLs )
+  //         => .K
+  //          )
+  //          ...
+  //      </k>
 
-    syntax Sort ::= #sortNameFromFunctionDecList(SMTLIB2FunctionDecList)   [function]
-    rule #sortNameFromFunctionDecList(DECLs)
-      => StringToSort(#nameFromFunctionDecListString(DECLs)
-                      +String "tuple"
+  syntax Sort ::= #sortNameFromFunctionDecList(SMTLIB2FunctionDecList) [function]
+  rule #sortNameFromFunctionDecList(DECLs)
+    => StringToSort(#nameFromSymbolsString(#funDecListToTermList(DECLs))
+                    +String "tuple"
+                   )
+  syntax Symbol ::= #symbolNameFromFunctionDecList(SMTLIB2FunctionDecList) [function]
+  rule #symbolNameFromFunctionDecList(DECLs)
+    => StringToSymbol(#nameFromSymbolsString(#funDecListToTermList(DECLs))
+                      +String "fixpoint"
                      )
-    syntax Symbol ::= #symbolNameFromFunctionDecList(SMTLIB2FunctionDecList)   [function]
-    rule #symbolNameFromFunctionDecList(DECLs)
-      => StringToSymbol(#nameFromFunctionDecListString(DECLs)
-                        +String "fixpoint"
-                       )
-    syntax String ::= #nameFromFunctionDecListString(SMTLIB2FunctionDecList) [function]
-    rule #nameFromFunctionDecListString( ( S1 (VARLIST) RETSORT ) DECLs)
-      => SMTLIB2SimpleSymbolToString(S1) +String "_"
-         +String #nameFromFunctionDecListString(DECLs)
-    rule #nameFromFunctionDecListString(.SMTLIB2FunctionDecList)
-      => ""
+  syntax Symbol ::= #symbolNameFromSymbols(SMTLIB2TermList) [function]
+  rule #symbolNameFromSymbols(Ts)
+    => StringToSymbol(#nameFromSymbolsString(Ts)
+                      +String "fixpoint"
+                     )
+  syntax String ::= #nameFromSymbolsString(SMTLIB2TermList) [function]
+  rule #nameFromSymbolsString( SYMBOL SYMBOLs )
+    => SMTLIB2SimpleSymbolToString(SYMBOL) +String "_"
+       +String #nameFromSymbolsString(SYMBOLs)
+  rule #nameFromSymbolsString(.SMTLIB2TermList)
+    => ""
 
   syntax SMTLIB2TermList ::= #funDecListToTermList(SMTLIB2FunctionDecList) [function]
-  syntax Patterns ::= #mutRecTermsToPatterns( recSymbols: SMTLIB2TermList
-                                            , decls:      SMTLIB2FunctionDecList
-                                            , bodies:     SMTLIB2TermList
-                                            )
-                                            [function]
-  rule #mutRecTermsToPatterns(recSymbols: SYMBOLS, decls: DECL DECLs, bodies: BODY BODIES)
-    => #mutRecTermToPattern(recSymbols: SYMBOLS, decl: DECL, body: BODY)
+  rule #funDecListToTermList(.SMTLIB2FunctionDecList) => .SMTLIB2TermList
+  rule #funDecListToTermList( ( ID (ARGs) RET ) DECLs ) => ID #funDecListToTermList(DECLs)
+
+  syntax Patterns ::= "#mutRecTermsToPatterns" "(" "recSymbols:" SMTLIB2TermList
+                                               "," "decls:"      SMTLIB2FunctionDecList
+                                               "," "bodies:"     SMTLIB2TermList
+                                               ")" [function]
+  rule #mutRecTermsToPatterns(recSymbols: SYMBOLS, decls: (ID (ARGs) RET) DECLs, bodies: BODY BODIES)
+    => #mutRecTermToPattern(SYMBOLS, BODY, SMTLIB2SortedVarListToPatterns(ARGs))
      , #mutRecTermsToPatterns(recSymbols: SYMBOLS, decls: DECLs, bodies: BODIES)
   rule #mutRecTermsToPatterns(recSymbols: SYMBOLS, decls: .SMTLIB2FunctionDecList, bodies: .SMTLIB2TermList)
     => .Patterns
 
-  syntax Pattern ::= #mutRecTermToPattern( recSymbols: SMTLIB2Term
-                                         , decl: SMTLIB2Term
-                                         , body: Pattern
-                                         ) [function]
-//  rule #mutRecTermToPattern( (exists ( ARGS ) T), Vs ) => \exists { SMTLIB2SortedVarListToPatterns(ARGS) } #mutRecTermToPattern(T, SMTLIB2SortedVarListToPatterns(ARGS) ++Patterns Vs)
-//  rule #mutRecTermToPattern((and Ts), Vs) => \and(SMTLIB2TermListToPatterns(Ts, Vs))
-//  rule #mutRecTermToPattern((or Ts), Vs) => \or(SMTLIB2TermListToPatterns(Ts, Vs))
-//  rule #mutRecTermToPattern((distinct L R), Vs) => \not(\equals(#mutRecTermToPattern(L, Vs), #mutRecTermToPattern(R, Vs)))
-//  rule #mutRecTermToPattern((= L R), Vs) => \equals(#mutRecTermToPattern(L, Vs), #mutRecTermToPattern(R, Vs))
-//  rule #mutRecTermToPattern((< L R), Vs) => lt(#mutRecTermToPattern(L, Vs), #mutRecTermToPattern(R, Vs))
-//  rule #mutRecTermToPattern((> L R), Vs) => gt(#mutRecTermToPattern(L, Vs), #mutRecTermToPattern(R, Vs))
-//  rule #mutRecTermToPattern((<= L R), Vs) => lte(#mutRecTermToPattern(L, Vs), #mutRecTermToPattern(R, Vs))
-//  rule #mutRecTermToPattern((>= L R), Vs) => gte(#mutRecTermToPattern(L, Vs), #mutRecTermToPattern(R, Vs))
-//  rule #mutRecTermToPattern((+ L R), Vs) => plus(#mutRecTermToPattern(L, Vs), #mutRecTermToPattern(R, Vs))
-//  rule #mutRecTermToPattern((- L R), Vs) => minus(#mutRecTermToPattern(L, Vs), #mutRecTermToPattern(R, Vs))
-//  rule #mutRecTermToPattern((* L R), Vs) => mult(#mutRecTermToPattern(L, Vs), #mutRecTermToPattern(R, Vs))
-//  rule #mutRecTermToPattern((not T), Vs) => \not(#mutRecTermToPattern(T, Vs))
-//  rule #mutRecTermToPattern((ite C L R), Vs) => \or( \and(#mutRecTermToPattern(C, Vs), #mutRecTermToPattern(L, Vs))
-//                                                   , \and(\not(#mutRecTermToPattern(C, Vs)), #mutRecTermToPattern(R, Vs)))
-//  rule #mutRecTermToPattern(I:Int, _) => I
-//  rule #mutRecTermToPattern(#token("true", "LowerName"), _) => \top()
-//  rule #mutRecTermToPattern(#token("false", "LowerName"), _) => \bottom()
-//  rule #mutRecTermToPattern((as nil SORT), _) => parameterizedSymbol(nil, SMTLIB2SortToSort(SORT))(.Patterns)
-//  rule #mutRecTermToPattern((underscore emp _ _), _) => emp(.Patterns)
-//
-//  rule #mutRecTermToPattern((ID Ts), Vs) => SMTLIB2SimpleSymbolToSymbol(ID)(SMTLIB2TermListToPatterns(Ts, Vs))
-//    [owise]
-//  rule #mutRecTermToPattern(ID:SMTLIB2SimpleSymbol, Vs) => SMTLIB2SimpleSymbolToVariableName(ID) { getSortForVariableName(SMTLIB2SimpleSymbolToVariableName(ID), Vs) }
-//    [owise]
+  syntax Pattern ::= #mutRecTermToPattern(SMTLIB2TermList, SMTLIB2Term, Patterns) [function]
+  rule #mutRecTermToPattern(SYMBOLs, (exists ( ARGS ) T), Vs ) => \exists { SMTLIB2SortedVarListToPatterns(ARGS) } #mutRecTermToPattern(SYMBOLs, T, SMTLIB2SortedVarListToPatterns(ARGS) ++Patterns Vs)
+  rule #mutRecTermToPattern(SYMBOLs, (and Ts), Vs) => \and(#mutRecTermListToPatterns(SYMBOLs, Ts, Vs))
+  rule #mutRecTermToPattern(SYMBOLs, (or Ts), Vs) => \or(#mutRecTermListToPatterns(SYMBOLs, Ts, Vs))
+  rule #mutRecTermToPattern(SYMBOLs, (distinct L R), Vs) => \not(\equals(#mutRecTermToPattern(SYMBOLs, L, Vs), #mutRecTermToPattern(SYMBOLs, R, Vs)))
+  rule #mutRecTermToPattern(SYMBOLs, (= L R), Vs) => \equals(#mutRecTermToPattern(SYMBOLs, L, Vs), #mutRecTermToPattern(SYMBOLs, R, Vs))
+  rule #mutRecTermToPattern(SYMBOLs, (< L R), Vs) => lt(#mutRecTermToPattern(SYMBOLs, L, Vs), #mutRecTermToPattern(SYMBOLs, R, Vs))
+  rule #mutRecTermToPattern(SYMBOLs, (> L R), Vs) => gt(#mutRecTermToPattern(SYMBOLs, L, Vs), #mutRecTermToPattern(SYMBOLs, R, Vs))
+  rule #mutRecTermToPattern(SYMBOLs, (<= L R), Vs) => lte(#mutRecTermToPattern(SYMBOLs, L, Vs), #mutRecTermToPattern(SYMBOLs, R, Vs))
+  rule #mutRecTermToPattern(SYMBOLs, (>= L R), Vs) => gte(#mutRecTermToPattern(SYMBOLs, L, Vs), #mutRecTermToPattern(SYMBOLs, R, Vs))
+  rule #mutRecTermToPattern(SYMBOLs, (+ L R), Vs) => plus(#mutRecTermToPattern(SYMBOLs, L, Vs), #mutRecTermToPattern(SYMBOLs, R, Vs))
+  rule #mutRecTermToPattern(SYMBOLs, (- L R), Vs) => minus(#mutRecTermToPattern(SYMBOLs, L, Vs), #mutRecTermToPattern(SYMBOLs, R, Vs))
+  rule #mutRecTermToPattern(SYMBOLs, (* L R), Vs) => mult(#mutRecTermToPattern(SYMBOLs, L, Vs), #mutRecTermToPattern(SYMBOLs, R, Vs))
+  rule #mutRecTermToPattern(SYMBOLs, (not T), Vs) => \not(#mutRecTermToPattern(SYMBOLs, T, Vs))
+  rule #mutRecTermToPattern(SYMBOLs, (ite C L R), Vs) => \or( \and(#mutRecTermToPattern(SYMBOLs, C, Vs), #mutRecTermToPattern(SYMBOLs, L, Vs))
+                                                            , \and(\not(#mutRecTermToPattern(SYMBOLs, C, Vs)), #mutRecTermToPattern(SYMBOLs, R, Vs)))
+  rule #mutRecTermToPattern(_, I:Int, _) => I
+  rule #mutRecTermToPattern(_, #token("true", "LowerName"), _) => \top()
+  rule #mutRecTermToPattern(_, #token("false", "LowerName"), _) => \bottom()
+  rule #mutRecTermToPattern(_, (as nil SORT), _) => parameterizedSymbol(nil, SMTLIB2SortToSort(SORT))(.Patterns)
+  rule #mutRecTermToPattern(_, (underscore emp _ _), _) => emp(.Patterns)
+
+  rule #mutRecTermToPattern(SYMBOLs, (ID Ts), Vs) => SMTLIB2SimpleSymbolToSymbol(ID)(#mutRecTermListToPatterns(SYMBOLs, Ts, Vs))
+    requires notBool (ID inTermList SYMBOLs)
+    [owise]
+  rule #mutRecTermToPattern(SYMBOLs, (ID Ts), Vs) => #symbolNameFromSymbols(SYMBOLs)(#mutRecTermListToPatterns(SYMBOLs, Ts, Vs))
+    requires (ID inTermList SYMBOLs)
+    [owise]
+  rule #mutRecTermToPattern(SYMBOLs, ID:SMTLIB2SimpleSymbol, Vs) => SMTLIB2SimpleSymbolToVariableName(ID) { getSortForVariableName(SMTLIB2SimpleSymbolToVariableName(ID), Vs) }
+    [owise]
+
+  syntax Patterns ::= #mutRecTermListToPatterns(SMTLIB2TermList, SMTLIB2TermList, Patterns) [function]
+  rule #mutRecTermListToPatterns(_, .SMTLIB2TermList, _) => .Patterns
+  rule #mutRecTermListToPatterns(SYMBOLs, T Ts, Vs) => #mutRecTermToPattern(SYMBOLs, T, Vs), #mutRecTermListToPatterns(SYMBOLs, Ts, Vs)
+
+  syntax Bool ::= SMTLIB2Term "inTermList" SMTLIB2TermList [function]
+  rule _ inTermList .SMTLIB2TermList => false
+  rule T:SMTLIB2Term inTermList T Ts => true
+  rule T1:SMTLIB2Term inTermList T2 Ts => T1 inTermList Ts
+    requires T1 =/=K T2
 ```
 
 
