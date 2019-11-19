@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+# KTBOUND=3 RUBOUND=5  ./build -k0 remaining-tests             > log.remaining.3
+KTBOUND=1 RUBOUND=15 ./build -k0 remaining-tests             > log.remaining.1
+KTBOUND=8 RUBOUND=8  ./build -k0 remaining-tests             > log.remaining.8
+
+KTBOUND=5 RUBOUND=5  ./build -k0 qf_shidlia_entl_unsat_tests > log.qf_shidlia_entl_unsat_tests.5 
+KTBOUND=5 RUBOUND=5  ./build -k0 qf_shlid_entl_unsat_tests   > log.qf_shlid_entl_unsat_tests.5   
+KTBOUND=5 RUBOUND=5  ./build -k0 shid_entl_unsat_tests       > log.shid_entl_unsat_tests.5       

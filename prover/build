@@ -2,7 +2,7 @@
 
 import sys
 import shutil
-from os        import (path, environ)
+from os        import (path, environ, getenv)
 from itertools import combinations
 
 repo_dir = path.dirname(__file__)
@@ -107,7 +107,10 @@ def config_for_test(test):
         unfold_mut_rec, ktbound, unfold_bound, timeout, list = list_config
         passing = True
         if test in list: return (unfold_mut_rec, ktbound, unfold_bound, timeout, passing)
-    return (True, 5, 12, '20m', False)
+    ktbound      = int(os.getenv('KTBOUND',   5  ))
+    unfold_bound = int(os.getenv('RUBOUND',  12  ))
+    timeout      =     os.getenv('TIMEOUT', '20m')
+    return (True, ktbound, unfold_bound, timeout, False)
 def strategy_for_test(test):
     (unfold_mut_rec, ktbound, unfold_bound, timeout, passing) = config_for_test(test)
     strategy = ''
@@ -130,7 +133,7 @@ def sl_comp_test(test, log_file):
     global tests_with_timeout
     test_no_timeout   = make_test(prover_smt.krun(), test)
     test_with_timeout = make_test(krun_with_timeout(timeout_for_test(test)), test) \
-                          .then(log_on_success(log_file, test))
+                          .then(log_on_success(log_file, test + "\t" + str(strategy_for_test(t))))
     return (test_no_timeout, test_with_timeout)
 
 qf_shid_entl_unsat_tests = read_list('t/test-lists/qf_shid_entl.unsat')
