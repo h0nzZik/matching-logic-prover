@@ -173,7 +173,7 @@ Note that the resulting goals is stonger than the initial goal (i.e.
        </strategy>
     requires Ps ==K .Patterns orBool N <=Int 0
   rule <strategy> right-unfold(symbols: P, Ps, bound: N)
-               => normalize . or-split-rhs . lift-constraints
+               => normalize . or-split-rhs . remove-lhs-existential . lift-constraints
                 . instantiate-existentials . substitute-equals-for-equals
                 . ( ( match . spatial-patterns-equal . smt-cvc4 )
                   | ( right-unfold(P) . right-unfold(symbols: P, Ps, bound: N -Int 1) )

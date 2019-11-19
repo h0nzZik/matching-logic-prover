@@ -79,7 +79,8 @@ for guessing an instantiation of the inductive hypothesis.
                     . kt-wrap(LRP) . kt-forall-intro
                     . kt-unfold . lift-or . and-split . remove-lhs-existential
                     . kt-unwrap
-                    . simplify . normalize . or-split-rhs. lift-constraints. kt-collapse
+                    . simplify . normalize . or-split-rhs. lift-constraints
+                    . kt-collapse
                     )
                     | ktForEachLRP(LRPs)
                   )
@@ -154,12 +155,13 @@ for guessing an instantiation of the inductive hypothesis.
 ```k
   syntax Strategy ::= "kt-unfold"
   rule <claim> \implies( LRP(ARGS) #as LHS
-                  => substituteBRPs(unfold(LHS), LRP, ARGS, RHS)
-                   , RHS
-                   )
+                      => substituteBRPs(unfold(LHS), LRP, ARGS, RHS)
+                       , RHS
+                       )
        </claim>
        <strategy> kt-unfold => noop ... </strategy>
     requires removeDuplicates(ARGS) ==K ARGS
+     andBool getFreeVariables(ARGS) ==K ARGS
      andBool isUnfoldable(LRP)
   rule <claim> \implies(LRP(ARGS), RHS)
        </claim>
@@ -298,12 +300,30 @@ solver using `kt-solve-implications`
 
 #### Collapsing contexts (SL)
 
-In the separation logic case, we must use matching.
+In the separation logic case, we split collapsing contexts into three stages.
 
-First, we use matching to instantiate the quantifiers of the implication context.
+1.  `match-context`: Instantiating quantified context variables, using the matching on
+    the spatial part as a heuristic.
+2.  `solve-context-contraints`: Use the SMT solver prove the constraints on the LHS
+    of the context.
+3.  `collapse-context`: Use matching to check if the context can be collapsed and do so.
+
+```k
+  rule <claim> \implies(\and(sep(_), _), _) #as GOAL </claim>
+       <strategy> kt-collapse
+               => match-context . solve-context-constraints . collapse-context
+                . kt-collapse
+                  ...
+       </strategy>
+    requires hasImplicationContext(GOAL)
+```
+
+```k
+  syntax Strategy ::= "match-context"
+``` 
+
+We use matching to instantiate the quantifiers of the implication context.
 Then we apply the substitution to the context, including the constraints.
-Next, duplicate constraints are removed using the ad-hoc rule below until the implication
-context has no constraints.
 
 ```k
   rule <claim> \implies(\and( sep ( \forall { UNIVs }
@@ -315,18 +335,17 @@ context has no constraints.
                        , RHS:Pattern
                        )
        </claim>
-       <strategy> kt-collapse
+       <strategy> match-context
                => with-each-match( #match(terms: LSPATIAL, pattern: CTXLHS, variables: UNIVs)
-                                 , kt-collapse
+                                 , match-context
                                  )
                   ...
        </strategy>
-     requires UNIVs =/=K .Patterns
 ```
 
 ```k
-  rule <claim> \implies(\and( ( sep ( \forall { UNIVs => .Patterns }
-                                      ( implicationContext( \and(sep(_), CTXLCONSTRAINTS), CTXRHS ) #as CTX
+  rule <claim> \implies(\and( ( sep ( \forall { UNIVs => UNIVs -Patterns fst(unzip(SUBST)) }
+                                      ( implicationContext( \and(sep(CTXLHS), CTXLCONSTRAINTS), CTXRHS ) #as CTX
                                      => substMap(CTX, SUBST)
                                       )
                                     , LSPATIAL
@@ -337,19 +356,26 @@ context has no constraints.
                        , RHS:Pattern
                        )
        </claim>
-       <strategy> ( #matchResult(subst: SUBST, rest: REST) ~> kt-collapse )
-               => kt-collapse
+       <strategy> ( #matchResult(subst: SUBST, rest: REST) ~> match-context )
+               => noop
                   ...
        </strategy>
-     requires UNIVs =/=K .Patterns
-      andBool UNIVs -Patterns fst(unzip(SUBST)) ==K .Patterns
 ```
 
-Finally, we use matching on the no universal quantifiers case to collapse the context.
+```k
+  syntax Strategy ::= "solve-context-constraints"
+```
+
+Otherwise, we instantiate quantified variables arbitarily, and try to prove
+the constraints using the smt solver:
 
 ```k
-  rule <claim> \implies(\and( sep ( \forall { .Patterns }
-                                    implicationContext( \and(sep(#hole, CTXLHS:Patterns)) , _)
+  rule <claim> \implies(\and( sep ( \forall { Vs => .Patterns }
+                                    implicationContext( \and( sep(_)
+                                                            , CONSTRAINTS
+                                                            )
+                                                      , _
+                                                      )
                                   , LSPATIAL
                                   )
                             , LHS:Patterns
@@ -357,31 +383,50 @@ Finally, we use matching on the no universal quantifiers case to collapse the co
                        , RHS:Pattern
                        )
        </claim>
-       <strategy> kt-collapse
-               => with-each-match( #match(terms: LSPATIAL, pattern: CTXLHS, variables: .Patterns)
-                                 , kt-collapse
-                                 )
+       <strategy> solve-context-constraints
+               => subgoal(\implies(\and(LHS), \exists { Vs } \and(CONSTRAINTS)), smt-cvc4)
+               ~> solve-context-constraints
                   ...
        </strategy>
+    requires Vs intersect getFreeVariables(LSPATIAL) ==K .Patterns 
+     andBool Vs intersect getFreeVariables(LHS) ==K .Patterns 
+     andBool Vs intersect getFreeVariables(RHS) ==K .Patterns // Shouldn't be necessary with alpha renaming?
+```
 
-  rule <claim> \implies( \and( ( sep ( \forall { .Patterns }
-                                       implicationContext( \and(sep(_)) , CTXRHS)
-                                     , LSPATIAL
-                                     )
-                              => sep(substMap(CTXRHS, SUBST) ++Patterns REST)
-                               )
-                               , LHS:Patterns
-                             )
+If the subgoal succeeds, we append the constraints to the LHS and continue:
+
+```k
+  rule <claim> \implies(\and( sep ( \forall { Vs => .Patterns }
+                                    implicationContext( \and( sep(_)
+                                                            , CONSTRAINTS
+                                                            )
+                                                      , _
+                                                      )
+                                  , LSPATIAL
+                                  )
+                            , ( LHS:Patterns
+                             => LHS ++Patterns CONSTRAINTS
+                              )
+                            )
                        , RHS:Pattern
                        )
        </claim>
-       <strategy> ( #matchResult(subst: SUBST, rest: REST) ~> kt-collapse )
-               => kt-collapse
+       <strategy> (success ~> solve-context-constraints)
+               => noop
+                  ...
+       </strategy>
+       
+  rule <strategy> (fail ~> solve-context-constraints)
+               => fail
                   ...
        </strategy>
 ```
 
-TODO: This is pretty adhoc: Remove constraints in the context that are already in the LHS
+```k
+    syntax Strategy ::= "collapse-context"
+```
+
+Any syntactically identical constraints already present in the LHS are removed from the context:
 
 ```k
   rule <claim> \implies(\and( sep ( \forall { .Patterns }
@@ -397,14 +442,16 @@ TODO: This is pretty adhoc: Remove constraints in the context that are already i
                        , RHS:Pattern
                        )
        </claim>
-       <strategy> kt-collapse ... </strategy>
+       <strategy> collapse-context ... </strategy>
     requires isPredicatePattern(CTXCONSTRAINT)
      andBool CTXCONSTRAINT in LHS
+```
 
+Finally, we use matching on the no universal quantifiers case to collapse the context.
+
+```k
   rule <claim> \implies(\and( sep ( \forall { .Patterns }
-                                    implicationContext( \and( sep(_)
-                                                            , ( CTXCONSTRAINT, CTXCONSTRAINTs )
-                                                            ) , _)
+                                    implicationContext( \and(sep(#hole, CTXLHS:Patterns)) , _)
                                   , LSPATIAL
                                   )
                             , LHS:Patterns
@@ -412,9 +459,28 @@ TODO: This is pretty adhoc: Remove constraints in the context that are already i
                        , RHS:Pattern
                        )
        </claim>
-       <strategy> kt-collapse => fail ... </strategy>
-    requires isPredicatePattern(CTXCONSTRAINT)
-     andBool notBool (CTXCONSTRAINT in LHS)
+       <strategy> collapse-context
+               => with-each-match( #match(terms: LSPATIAL, pattern: CTXLHS, variables: .Patterns)
+                                 , collapse-context
+                                 )
+                  ...
+       </strategy>
+
+  rule <claim> \implies( \and( ( sep ( \forall { .Patterns }
+                                       implicationContext( \and(sep(_)) , CTXRHS)
+                                     , LSPATIAL
+                                     )
+                              => sep(substMap(CTXRHS, SUBST) ++Patterns REST)
+                               )
+                               , LHS:Patterns
+                             )
+                       , RHS:Pattern
+                       )
+       </claim>
+       <strategy> ( #matchResult(subst: SUBST, rest: REST) ~> collapse-context )
+               => noop
+                  ...
+       </strategy>
 ```
 
 #### Infrastructure

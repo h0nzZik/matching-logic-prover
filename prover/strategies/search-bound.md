@@ -22,13 +22,13 @@ module STRATEGY-SEARCH-BOUND
   rule <strategy> search-sl(kt-bound: 0, unfold-bound: UNFOLDBOUND) => fail ... </strategy>
   rule <strategy> search-sl(kt-bound: KTBOUND, unfold-bound: UNFOLDBOUND)
                => normalize . or-split-rhs
-                . lift-constraints . instantiate-existentials . substitute-equals-for-equals
+                . remove-lhs-existential . lift-constraints . instantiate-existentials . substitute-equals-for-equals
                 . ( ( instantiate-separation-logic-axioms . check-lhs-constraint-unsat
                     . ( right-unfold-all(bound: UNFOLDBOUND) )
-                    . normalize . or-split-rhs . lift-constraints . instantiate-existentials . substitute-equals-for-equals
+                    . remove-lhs-existential . normalize . or-split-rhs . lift-constraints . instantiate-existentials . substitute-equals-for-equals
                     . match . spatial-patterns-equal . smt-cvc4
                     )
-                  | ( kt . search-sl(kt-bound: KTBOUND -Int 1, unfold-bound: UNFOLDBOUND) )
+                  | ( instantiate-separation-logic-axioms . purify .kt . search-sl(kt-bound: KTBOUND -Int 1, unfold-bound: UNFOLDBOUND) )
                   )
                   ...
        </strategy>
