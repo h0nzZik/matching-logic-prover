@@ -329,7 +329,11 @@ module DRIVER-SMT
              <id> root </id>
              <active> true:Bool </active>
              <parent> .K </parent>
-             <claim> \implies(\and(#filterPositive(Ps)), \and(\or(#filterNegative(Ps)))) </claim>
+             <claim> \forall { Vs }
+                     \implies( \and(#filterPositive(Ps))
+                             , \and(\or(#filterNegative(Ps)))
+                             )
+             </claim>
              <strategy> STRAT </strategy>
              <expected> EXPECTED </expected>
              <trace> .K </trace>

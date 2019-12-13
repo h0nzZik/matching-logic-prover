@@ -227,22 +227,19 @@ Internal strategy used to implement `or-split` and `and-split`.
 ```
 
 ```k
-  rule <claim> \implies(LHS, \exists { Vs } \and(\or(RHSs), REST)) </claim>
-       <strategy> or-split-rhs => #orSplitImplication(LHS, Vs, RHSs, REST) ... </strategy>
+  rule <claim> \forall {Us} ( \implies(LHS, \exists { Vs } \and(\or(RHSs), REST))
+                              #as IMPLICATION
+                            )
+            => \or(#forall(#orSplitImplication(IMPLICATION), Us))
+       </claim>
+       <strategy> or-split-rhs => or-split ... </strategy>
 
-  rule <claim> \implies(LHS, \exists { Vs } \and(RHSs, REST)) </claim>
-       <strategy> or-split-rhs => noop ... </strategy>
-    requires notBool isDisjunction(RHSs)
-  rule <claim> \implies(LHS, \exists { Vs } \and(.Patterns)) </claim>
-       <strategy> or-split-rhs => noop ... </strategy>
-
-  rule <claim> \implies(LHS, \exists { Vs } \and(.Patterns)) </claim>
-       <strategy> or-split-rhs => noop ... </strategy>
-
-  syntax Strategy ::= "#orSplitImplication" "(" Pattern "," Patterns "," Patterns "," Patterns ")" [function]
-  rule #orSplitImplication(P, Vs, .Patterns, REST) => replace-goal(\implies(P, \exists{Vs} \and(\or(.Patterns))))
-  rule #orSplitImplication(P1, Vs, (P2, .Patterns), REST) => replace-goal(\implies(P1, \exists{Vs} \and(P2, REST)))
-  rule #orSplitImplication(P1, Vs, (P2, Ps), REST) => replace-goal(\implies(P1, \exists{Vs} \and(P2, REST))) | #orSplitImplication(P1, Vs, Ps, REST) [owise]
+  syntax Patterns ::= "#orSplitImplication" "(" Pattern ")" [function]
+  rule #orSplitImplication(\implies( LHS , \exists { Vs } \and(\or(.Patterns), REST)) ) 
+    => .Patterns
+  rule #orSplitImplication(\implies( LHS , \exists { Vs } \and(\or(RHS, RHSs), REST)) )
+    => \implies(LHS, \exists { Vs } \and(RHS, REST))
+     , #orSplitImplication(\implies( LHS , \exists { Vs } \and(\or(RHSs), REST)) )
 ```
 
 `and-split`: conjunction of implications:

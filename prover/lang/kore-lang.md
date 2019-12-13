@@ -537,10 +537,16 @@ Simplifications
     requires isBasePattern(P)
   rule #dnfPs(\exists{Vs} P, Ps) => #exists(#dnfPs(P, .Patterns), Vs) ++Patterns #dnfPs(Ps)
 
+  // TODO \and should not be a special case
   syntax Patterns ::= #exists(Patterns, Patterns) [function]
   rule #exists(.Patterns, _) => .Patterns
   rule #exists((\and(Ps1), Ps2), Vs) => \exists{removeDuplicates(Vs intersect getFreeVariables(Ps1))} \and(Ps1), #exists(Ps2, Vs)
   rule #exists((\exists{Es} P, Ps2), Vs) => \exists{removeDuplicates(Es ++Patterns (Vs intersect getFreeVariables(P)))} P, #exists(Ps2, Vs)
+
+  syntax Patterns ::= #forall(Patterns, Patterns) [function]
+  rule #forall(.Patterns, _) => .Patterns
+  rule #forall((P, Ps), Vs)
+    => ((\forall {Vs intersect getFreeVariables(P)} P), #forall(Ps, Vs))
 
   rule #dnfPs(\not(\and(Ps)), REST) => #dnfPs(#not(Ps)) ++Patterns #dnfPs(REST)
   rule #dnfPs(\not(\or(Ps)), REST)  => #dnfPs(\and(#not(Ps)), REST)
