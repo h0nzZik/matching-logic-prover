@@ -15,7 +15,7 @@ module COQ
                     | UpperName
   syntax CoqQualID ::= CoqIdent
   syntax CoqName ::= CoqIdent
-                   | "_"
+                // | "_"     this causes parsing errors. 
   syntax CoqNames ::= List{CoqName, ""} [klabel(CoqNames)]
 
 // Hardcoded Coq Sorts
@@ -35,8 +35,9 @@ module COQ
                    | CoqQualID
                    | CoqSort
                    | Int
-                   | "_"
+                // | "_"
                    > "forall" CoqBinders "," CoqTerm
+                   > "(" CoqTerm ")" [bracket]
 
   syntax CoqBinder ::= CoqName
                      | "(" CoqNames ":" CoqTerm ")"
@@ -68,7 +69,7 @@ module COQ
                       | CoqPattern "as" CoqIdent
                       | CoqPattern "%" CoqIdent
                       | CoqQualID
-                      | "_"
+                   // | "_"
                       | Int
 
   syntax CoqMultPattern ::= List{CoqPattern, ","} [klabel(CoqMultPattern)]
@@ -77,13 +78,16 @@ module COQ
 // Vernacular
   syntax CoqSentence ::= CoqDefinition
                        | CoqInductive
+  //                   | CoqCoInductive
   syntax CoqSentences ::= List{CoqSentence, ""} [klabel(CoqSentences)]
   syntax CoqDefinition ::= "Definition" CoqIdent ":=" CoqTerm "."
+                         | "Definition" CoqIdent CoqBinders ":" CoqTerm ":=" CoqTerm "."
 
   syntax CoqInductive ::= "Inductive" CoqIndBody "."
   syntax CoqIndBody ::= CoqIdent CoqBinders ":" CoqTerm ":=" CoqIndCases
   syntax CoqIndCase ::= CoqIdent CoqBinders ":" CoqTerm
   syntax CoqIndCases ::= List{CoqIndCase, "|"}
+
 ```
 
 ```k
