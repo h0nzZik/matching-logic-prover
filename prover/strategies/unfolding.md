@@ -317,6 +317,41 @@ or `N` is out of range, `right-unfold(M,N) => fail`.
                => right-unfold-oneBody(RRP, Body)
                   ...
        </strategy>
+
+  syntax Strategy ::= addAssumption(Pattern)
+
+  rule <claim> \implies(
+                 \and(
+                   Ps::Patterns =>
+                   Ps ++Patterns
+                   alphaRename(
+                     \forall{getUniversalVariables(P)} P
+                   )
+                 ),
+                 _
+               )
+       </claim>
+       <strategy> addAssumption(P) => noop
+       ...</strategy>
+
+  rule <strategy> use-axiom(Name)
+               => addAssumption(P)
+       ...</strategy>
+       <declaration> axiom Name : P </declaration>
+
+  rule <goals>...
+         <goal>...
+            <strategy> use-claim(Name)
+                    => addAssumption(P)
+            ...</strategy>
+       ...</goal>
+         <goal>...
+           <claim-name> Name </claim-name>
+           <claim> P </claim>
+           <strategy> success </strategy>
+         ...</goal>
+       ...</goals>
+
 ```
 
 ```k

@@ -47,6 +47,8 @@ module STRATEGIES-EXPORTED-SYNTAX
                     | "match" | "match-pto"
                     | "frame"
                     | "unfold-mut-recs"
+                    | "use-axiom" "(" AxiomName ")"
+                    | "use-claim" "(" ClaimName ")"
 
   syntax KTFilter ::= head(Symbol)
                     | index(Int)
