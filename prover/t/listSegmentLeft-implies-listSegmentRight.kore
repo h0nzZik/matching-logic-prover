@@ -5,7 +5,7 @@ claim \implies( \and( listSegmentLeft (H { ArrayIntInt } , X { Int }, Y { Int },
               , \and( listSegmentRight(H { ArrayIntInt } , X { Int }, Y { Int }, F { SetInt }) )
               )
 
-// strategy search-bound(5)
+; strategy search-bound(5)
 
 strategy kt . normalize . ( ( simplify . right-unfold-Nth(0, 0) . smt )
                           | ( kt-solve-implications(smt) . normalize
