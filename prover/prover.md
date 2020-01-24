@@ -10,6 +10,7 @@ requires "strategies/matching.k"
 requires "strategies/search-bound.k"
 requires "strategies/simplification.k"
 requires "strategies/smt.k"
+requires "strategies/rewrite.k"
 requires "strategies/unfolding.k"
 requires "strategies/visitor.k"
 ```
@@ -53,6 +54,10 @@ module STRATEGIES-EXPORTED-SYNTAX
                     | "unfold-mut-recs"
                     | "use-axiom" "(" AxiomName ")"
                     | "use-claim" "(" ClaimName ")"
+                    | "rewrite" AxiomOrClaimName
+                    | "rewrite" RewriteDirection AxiomOrClaimName
+
+  syntax RewriteDirection ::= "->" | "<-"
 
   syntax KTFilter ::= head(Symbol)
                     | index(Int)

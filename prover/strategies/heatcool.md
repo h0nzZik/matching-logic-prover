@@ -12,11 +12,13 @@ module HEATCOOL-SYNTAX
   imports MAP
 
   syntax Pattern
+  syntax Patterns
 
   syntax HeatError ::= heatError()
   syntax HeatResult ::= heatResult(Pattern, Map)
   syntax HeatResult ::= "heat" "(" "term:" Pattern
                                "," "pattern:" Pattern
+                               "," "variables:" Patterns
                                "," "index:" Int
                                ")" [function]
 
@@ -33,14 +35,20 @@ module HEATCOOL-RULES
   imports KORE-HELPERS
 
   syntax Visitor ::= "heatVisitor" "(" "pattern:" Pattern
+                                   "," "variables:" Patterns
                                    "," "index:" Int
                                    "," "result:" K
                                    ")"
 
-  rule heat(term: T, pattern: P, index: N)
+  rule heat(term: T, pattern: P, variables: Vars, index: N)
     => heatVisitorResult(
          visitTopDown(
-           heatVisitor(pattern: P, index: N, result: .K),
+           heatVisitor(
+             pattern: P,
+             variables:Vars,
+             index: N,
+             result: .K
+           ),
            T
          )
        )
@@ -52,6 +60,7 @@ module HEATCOOL-RULES
          visitorResult(
            heatVisitor(
              pattern: _,
+             variables: _,
              index: N,
              result: _
            ),
@@ -65,6 +74,7 @@ module HEATCOOL-RULES
          visitorResult(
            heatVisitor(
              pattern: _,
+             variables: _,
              index: N,
              result: M:Map
            ),
@@ -77,6 +87,7 @@ module HEATCOOL-RULES
   rule visit(
          heatVisitor(
            pattern: _,
+           variables: _,
            index: N,
            result: _
          ) #as V,
@@ -88,18 +99,20 @@ module HEATCOOL-RULES
   rule visit(
          heatVisitor(
            pattern: P,
+           variables: Vars,
            index: N,
            result: .K
          ),
          T
        ) => #visitHeatVisitor(
               pattern: P,
+              variables: Vars,
               index: N,
               term: T,
               matchResult: #matchAssoc(
                 terms: T,
                 pattern: P,
-                variables: getFreeVariables(P),
+                variables: Vars,
                 subst: .Map,
                 rest: .Patterns
               )
@@ -109,6 +122,7 @@ module HEATCOOL-RULES
   syntax VisitorResult
          ::= "#visitHeatVisitor"
                "(" "pattern:" Pattern
+               "," "variables:" Patterns
                "," "index:" Int
                "," "term:" Pattern
                "," "matchResult:" MatchResults
@@ -117,12 +131,14 @@ module HEATCOOL-RULES
   // no match
   rule #visitHeatVisitor(
          pattern: P,
+         variables: Vars,
          index: N,
          term: T,
          matchResult: #matchFailure(_)
        ) => visitorResult(
               heatVisitor(
                 pattern: P,
+                variables: Vars,
                 index: N,
                 result: .K
               ),
@@ -131,12 +147,14 @@ module HEATCOOL-RULES
   // match, continue matching
   rule #visitHeatVisitor(
          pattern: P,
+         variables: Vars,
          index: N,
          term: T,
          matchResult: #matchResult(subst: _, rest: _)
        ) => visitorResult(
          heatVisitor(
            pattern: P,
+           variables: Vars,
            index: N -Int 1,
            result: .K
          ),
@@ -147,12 +165,14 @@ module HEATCOOL-RULES
   // match -> replace the pattern with hole
   rule #visitHeatVisitor(
          pattern: P,
+         variables: Vars,
          index: 0,
          term: T,
          matchResult: #matchResult(subst: S, rest: _)
        ) => visitorResult(
          heatVisitor(
            pattern: P,
+           variables: Vars,
            index: -1,
            result: S
          ),
