@@ -93,6 +93,24 @@ Recurse over assoc-only constructors (including `pto`):
     requires (Ts ==K .Patterns orBool Ps ==K .Patterns)
      andBool notBool (Ts ==K .Patterns andBool Ps ==K .Patterns)
 
+  // matching ints
+  rule #matchAssoc( terms:     N:Int, Ts => Ts
+                  , pattern:   N:Int, Ps => Ps
+                  , variables: _
+                  , subst:     _
+                  , rest:      _
+                  )
+
+  // Non-matching ints
+  rule #matchAssoc( terms:     N:Int, _
+                  , pattern:   M:Int, _
+                  , variables: _
+                  , subst:     _
+                  , rest:      _
+                  )
+    => #matchFailure("Integers do not match"), .MatchResults
+    requires N =/=Int M
+
   // Non-matching constructors
   rule #matchAssoc( terms:     S1:Symbol(_), Ts
                   , pattern:   S2:Symbol(_), Ps
@@ -177,6 +195,283 @@ Recurse over assoc-only constructors (including `pto`):
     requires T =/=K P
      andBool P in Vs
      andBool getReturnSort(T) ==K getReturnSort(P)
+
+
+  // A lot of repetetive code below.
+  // This could be reduced if we had a generic support
+  // for notations.
+
+  // \equals(_,_) matched
+  rule #matchAssoc( terms:     \equals(T1, T2), Ts
+                               => T1 ++Patterns T2 ++Patterns Ts
+                  , pattern:   \equals(P1, P2), Ps
+                               => P1 ++Patterns P2 ++Patterns Ps
+                  , variables: _
+                  , subst:     _
+                  , rest:      _
+                  )
+
+  // \equals(_,_) mismatched
+  rule #matchAssoc( terms:     T, _
+                  , pattern:   \equals(...), _
+                  , variables: _
+                  , subst:     _
+                  , rest:      _
+                  )
+    => #matchFailure("\\equals(_,_) does not match"), .MatchResults
+    requires \equals(...) :/=K T
+
+  // \not(_) matched
+  rule #matchAssoc( terms:     \not(T), Ts
+                               => T ++Patterns Ts
+                  , pattern:   \not(P), Ps
+                               => P ++Patterns Ps
+                  , variables: _
+                  , subst:     _
+                  , rest:      _
+                  )
+
+  // \not(_) mismatched
+  rule #matchAssoc( terms:     T, _
+                  , pattern:   \not(_), _
+                  , variables: _
+                  , subst:     _
+                  , rest:      _
+                  )
+    => #matchFailure("\\not(_) does not match"), .MatchResults
+    requires \not(...) :/=K T
+
+  // \and(...) matched
+  rule #matchAssoc( terms:     \and(T_ARGS), Ts
+                               => T_ARGS ++Patterns Ts
+                  , pattern:   \and(P_ARGS), Ps
+                               => P_ARGS ++Patterns Ps
+                  , variables: _
+                  , subst:     _
+                  , rest:      _
+                  )
+
+  // \and(...) mismatched
+  rule #matchAssoc( terms:     T, _
+                  , pattern:   \and(_), _
+                  , variables: _
+                  , subst:     _
+                  , rest:      _
+                  )
+    => #matchFailure("\\and(...) does not match"), .MatchResults
+    requires \and(...) :/=K T
+
+  // \or(...) matched
+  rule #matchAssoc( terms:     \or(T_ARGS), Ts
+                               => T_ARGS ++Patterns Ts
+                  , pattern:   \or(P_ARGS), Ps
+                               => P_ARGS ++Patterns Ps
+                  , variables: _
+                  , subst:     _
+                  , rest:      _
+                  )
+
+  // \or(_) mismatched
+  rule #matchAssoc( terms:     T, _
+                  , pattern:   \or(_), _
+                  , variables: _
+                  , subst:     _
+                  , rest:      _
+                  )
+    => #matchFailure("\\or(...) does not match"), .MatchResults
+    requires \or(...) :/=K T
+
+  // \implies(_,_) matched
+  rule #matchAssoc( terms:     \implies(T1, T2), Ts
+                               => T1 ++Patterns T2 ++Patterns Ts
+                  , pattern:   \implies(P1, P2), Ps
+                               => P1 ++Patterns P2 ++Patterns Ps
+                  , variables: _
+                  , subst:     _
+                  , rest:      _
+                  )
+
+  // \implies(_,_) mismatched
+  rule #matchAssoc( terms:     T, _
+                  , pattern:   \implies(...), _
+                  , variables: _
+                  , subst:     _
+                  , rest:      _
+                  )
+    => #matchFailure("\\implies(_,_) does not match"), .MatchResults
+    requires \implies(...) :/=K T
+
+  // \exists{_}_ matched
+  rule #matchAssoc( terms:     \exists{TVARS} T, Ts
+                  , pattern:   \exists{PVARS} P, Ps
+                  , variables: VARS
+                  , subst:     SUBST
+                  , rest:      REST
+                  )
+       => matchAssocForallExists
+            ( term:         T
+            , pattern:      P
+            , termVars:     TVARS
+            , patternVars:  PVARS
+            , variables:    VARS
+            , subst:        SUBST
+            , rest:         REST
+            , thenTerms:    Ts
+            , thenPatterns: Ps
+            )
+
+
+  // \exists{_}_ mismatched
+  rule #matchAssoc( terms:     T, _
+                  , pattern:   \exists{_} _, _
+                  , variables: _
+                  , subst:     _
+                  , rest:      _
+                  )
+    => #matchFailure("\\exists{_}_ does not match"), .MatchResults
+    requires \exists{_}_ :/=K T
+
+  // \forall{_}_ matched
+  rule #matchAssoc( terms:     \forall{TVARS} T, Ts
+                  , pattern:   \forall{PVARS} P, Ps
+                  , variables: VARS
+                  , subst:     SUBST
+                  , rest:      REST
+                  )
+       => matchAssocForallExists
+            ( term:         T
+            , pattern:      P
+            , termVars:     TVARS
+            , patternVars:  PVARS
+            , variables:    VARS
+            , subst:        SUBST
+            , rest:         REST
+            , thenTerms:    Ts
+            , thenPatterns: Ps
+            )
+
+
+  // \exists{_}_ mismatched
+  rule #matchAssoc( terms:     T, _
+                  , pattern:   \forall{_} _, _
+                  , variables: _
+                  , subst:     _
+                  , rest:      _
+                  )
+    => #matchFailure("\\forall{_}_ does not match"), .MatchResults
+    requires \forall{_}_ :/=K T
+
+
+```
+
+Matching forall/exists:
+1. bind patternVars to termVars
+2. pattern match pattern to term.
+   (1 and 2 aredone in one call to matchAssoc
+but we must add patternVars to variables
+and remove it from the substitution)
+removeAll(_, patternVars)
+updateMap(_, subst)
+
+```k
+
+  syntax MatchResults ::= "matchAssocForallExists"
+                   "(" "term:"         Pattern
+                   "," "pattern:"      Pattern
+                   "," "termVars:"     Patterns
+                   "," "patternVars:"  Patterns
+                   "," "variables:"    Patterns
+                   "," "subst:"        Map
+                   "," "rest:"         Patterns
+                   "," "thenTerms:"    Patterns
+                   "," "thenPatterns:" Patterns
+                   ")" [function]
+
+  syntax Set ::= PatternsToSet(Patterns) [function]
+  rule PatternsToSet(.Patterns) => .Set
+  rule PatternsToSet(P, Ps) => SetItem(P) PatternsToSet(Ps)
+
+  rule matchAssocForallExists
+       ( term:         T
+       , pattern:      P
+       , termVars:     TVARS
+       , patternVars:  PVARS
+       , variables:    VARS
+       , subst:        SUBST
+       , rest:         REST
+       , thenTerms:    Ts
+       , thenPatterns: Ps
+       )
+       =>
+       #matchAssocForallExists
+       ( term:         T
+       , pattern:      P
+       , termVars:     TVARS
+       , patternVars:  PVARS
+       , variables:    VARS
+       , subst:        SUBST
+       , rest:         REST
+       , thenTerms:    Ts
+       , thenPatterns: Ps
+       , matchResult:
+           #matchAssoc
+           ( terms:     TVARS ++Patterns T
+           , pattern:   PVARS ++Patterns P
+           , variables: VARS ++Patterns PVARS
+           , subst:     removeAll(SUBST, PatternsToSet(PVARS))
+           , rest:      .Patterns
+           )
+       )
+
+  syntax MatchResults ::= "#matchAssocForallExists"
+                   "(" "term:"         Pattern
+                   "," "pattern:"      Pattern
+                   "," "termVars:"     Patterns
+                   "," "patternVars:"  Patterns
+                   "," "variables:"    Patterns
+                   "," "subst:"        Map
+                   "," "rest:"         Patterns
+                   "," "thenTerms:"    Patterns
+                   "," "thenPatterns:" Patterns
+                   "," "matchResult:"  K
+                   ")" [function]
+
+  rule #matchAssocForallExists
+       ( term:         _
+       , pattern:      _
+       , termVars:     _
+       , patternVars:  _
+       , variables:    _
+       , subst:        _
+       , rest:         _
+       , thenTerms:    _
+       , thenPatterns: _
+       , matchResult:  #matchFailure(S)
+       ) => #matchFailure(
+          "Failure matching forall/exists: " +String S)
+
+  rule #matchAssocForallExists
+       ( term:         _
+       , pattern:      _
+       , termVars:     _
+       , patternVars:  PVARS
+       , variables:    VARS
+       , subst:        SUBST
+       , rest:         REST
+       , thenTerms:    Ts
+       , thenPatterns: Ps
+       , matchResult:  #matchResult(subst: RESULT, rest: _)
+       ) =>
+       #matchAssoc
+       ( terms:     Ts
+       , pattern:   Ps
+       , variables: VARS
+       , subst:     updateMap(
+                      removeAll(RESULT, PatternsToSet(PVARS)), SUBST)
+       , rest:      REST
+       )
+
+
 ```
 
 Recurse over assoc-comm `sep`:
