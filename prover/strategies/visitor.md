@@ -151,6 +151,10 @@ module VISITOR
   rule #visitTopDownForall(Vars, visitorResult(V, P))
     => visitorResult(V, \forall{Vars} P)
 
+  // \hole()
+  rule #visitTopDown(visitorResult(_,\hole()) #as VR) => VR
+
+
 ```
 
 
