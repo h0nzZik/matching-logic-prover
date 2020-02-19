@@ -188,6 +188,21 @@ module VISITOR
   rule #visitTopDownIffLfp2(P1, visitorResult(V, P2))
     => visitorResult(V, \iff-lfp(P1, P2))
 
+  // \typeof(_, _)
+  rule #visitTopDown(visitorResult(V,\typeof(P1, P2)))
+    => #visitTopDownTypeof1(visitTopDown(V, P1), P2)
+
+  syntax VisitorResult
+         ::= #visitTopDownTypeof1(VisitorResult, Pattern) [function]
+
+  rule #visitTopDownTypeof1(visitorResult(V, P1), P2)
+    => #visitTopDownTypeof2(P1, visitTopDown(V, P2))
+
+  syntax VisitorResult
+         ::= #visitTopDownTypeof2(Pattern, VisitorResult) [function]
+  rule #visitTopDownTypeof2(P1, visitorResult(V, P2))
+    => visitorResult(V, \typeof(P1, P2))
+
 
 
 ```
