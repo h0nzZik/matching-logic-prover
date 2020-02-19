@@ -162,7 +162,7 @@ only in this scenario*.
                    | "\\iff-lfp" "(" Pattern "," Pattern ")"    [klabel(ifflfp)]
 
                    // sugar for commonly needed axioms
-                   | "\\typeof" "(" Pattern "," Pattern ")"
+                   | "\\typeof" "(" Pattern "," Sort ")"
                    | "functional" "(" Symbol ")"
                    | "partial" "(" Patterns ")"
                    | "heap" "(" Sort "," Sort ")" // Location, Data
